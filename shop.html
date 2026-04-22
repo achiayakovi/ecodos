@@ -1908,9 +1908,6 @@
                 <!-- Category Filter -->
                 <div class="category-filter" id="categoryFilter" style="display: none;">
                     <button class="category-btn active" onclick="filterByCategory('')">הכל</button>
-                    <button class="category-btn" onclick="filterByCategory('שקעים')">שקעים</button>
-                    <button class="category-btn" onclick="filterByCategory('מתגים')">מתגים</button>
-                    <button class="category-btn" onclick="filterByCategory('בקרים')">בקרים</button>
                 </div>
 
                 <div id="productsContainer" class="products-grid">
@@ -2547,6 +2544,26 @@
             }
         }
 
+
+        // טעינת קטגוריות מה-API
+        async function loadCategories() {
+            const filter = document.getElementById('categoryFilter');
+            if (!filter) return;
+            try {
+                const res = await fetch(`${API_URL}/api/categories`);
+                const cats = await res.json();
+                cats.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.textContent = cat.label;
+                    btn.onclick = () => filterByCategory(cat.value);
+                    filter.appendChild(btn);
+                });
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+            }
+        }
+
         // אתחול
         updateFooterAndButtons();
         window.addEventListener('resize', updateFooterAndButtons);
@@ -2555,6 +2572,7 @@
         window.addEventListener('resize', updateAccountButtonPosition);
         updateAccountButtonPosition();
         loadProducts();
+        loadCategories();
         updateCartBadge();
     </script>
     <script src="accessibility.js">

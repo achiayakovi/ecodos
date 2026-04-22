@@ -10,7 +10,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Heebo', sans-serif;
-            background: #f5f7fa;
+            background: #0D0F14;
             padding: 20px;
         }
         .container { max-width: 1600px; margin: 0 auto; }
@@ -26,9 +26,9 @@
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h1 { color: #667eea; font-size: 1.8rem; }
+        h1 { color: #1E6FD9; font-size: 1.8rem; }
         .logout { 
-            background: #e74c3c;
+            background: rgba(220,53,69,0.8);
             color: white;
             border: none;
             padding: 10px 20px;
@@ -50,7 +50,7 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .stat-number { font-size: 2.5rem; font-weight: 700; color: #667eea; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: #1E6FD9; }
         .stat-label { color: #8A9BB0; margin-top: 8px; }
         
         /* Tabs */
@@ -70,7 +70,7 @@
             color: #8A9BB0;
             transition: all 0.3s;
         }
-        .tab:hover { background: #ecf0f1; }
+        .tab:hover { background: rgba(30,111,217,0.1); }
         .tab.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -85,7 +85,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
         .section.active { display: block; }
-        .section h2 { color: #667eea; margin-bottom: 20px; }
+        .section h2 { color: #1E6FD9; margin-bottom: 20px; }
         
         /* Filters & Actions */
         .top-bar {
@@ -124,9 +124,9 @@
         }
         .btn-primary:hover { transform: translateY(-2px); }
         .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
-        .btn-edit { background: #3498db; color: white; }
-        .btn-delete { background: #e74c3c; color: white; }
-        .btn-success { background: #27ae60; color: white; }
+        .btn-edit { background: #1E6FD9; color: white; }
+        .btn-delete { background: rgba(220,53,69,0.8); color: white; }
+        .btn-success { background: #1E6FD9; color: white; }
         
         /* Table */
         .table-container { overflow-x: auto; }
@@ -143,7 +143,7 @@
         th {
             background: #1C2130;
             font-weight: 700;
-            color: #667eea;
+            color: #1E6FD9;
             position: sticky;
             top: 0;
         }
@@ -151,7 +151,7 @@
         .clickable {
             cursor: pointer;
             text-decoration: underline;
-            color: #3498db;
+            color: #5ba3f5;
         }
         
         /* Modal */
@@ -185,7 +185,7 @@
             align-items: center;
             margin-bottom: 20px;
         }
-        .modal-header h3 { color: #667eea; }
+        .modal-header h3 { color: #1E6FD9; }
         .close-modal {
             background: none;
             border: none;
@@ -231,8 +231,8 @@
             margin-bottom: 20px;
             font-weight: 600;
         }
-        .message.success { background: #d4edda; color: #155724; }
-        .message.error { background: #f8d7da; color: #721c24; }
+        .message.success { background: rgba(30,111,217,0.15); color: #5ba3f5; }
+        .message.error { background: rgba(220,53,69,0.15); color: #f77; }
         
         /* Loading & Empty */
         .loading {
@@ -410,6 +410,26 @@
                 </div>
                 <div id="settingsMessage" style="margin-top: 15px; display: none;"></div>
             </div>
+
+            <div style="background: #151820; padding: 25px; border-radius: 12px; border: 1px solid #1C2130; max-width: 600px;">
+                <h3 style="margin-bottom: 20px; color: #F0F2F5;">קטגוריות מוצרים — תפריט החנות</h3>
+                <p style="color: #8A9BB0; margin-bottom: 20px; font-size: 0.95rem;">הקטגוריות שמופיעות בסינון החנות ובשדה קטגוריה בעריכת מוצר.</p>
+
+                <div id="categoriesList" style="margin-bottom: 20px;"></div>
+
+                <div style="display: flex; gap: 10px; align-items: end;">
+                    <div class="form-group" style="flex: 2; margin: 0;">
+                        <label>ערך (מזהה)</label>
+                        <input type="text" id="newCategoryValue" placeholder="למשל: switches">
+                    </div>
+                    <div class="form-group" style="flex: 3; margin: 0;">
+                        <label>תווית (טקסט מוצג)</label>
+                        <input type="text" id="newCategoryLabel" placeholder="למשל: מתגים חכמים">
+                    </div>
+                    <button class="btn btn-primary" onclick="addCategory()" style="margin-bottom: 0; height: 46px;">הוסף</button>
+                </div>
+                <div id="categoryMessage" style="margin-top: 15px; display: none;"></div>
+            </div>
         </div>
 
     <!-- Product Modal -->
@@ -436,10 +456,6 @@
                     <label>קטגוריה</label>
                     <select id="productCategory">
                         <option value="">בחר קטגוריה</option>
-                        <option value="משאבות חשמליות">משאבות חשמליות</option>
-                        <option value="אביזרים וחלפים">אביזרים וחלפים</option>
-                        <option value="אחסון חלב">אחסון חלב</option>
-                        <option value="מתנות">מתנות</option>
                     </select>
                 </div>
                 
@@ -978,7 +994,7 @@
                                             '<span style="color: red;">🔴 אזל</span>' : 
                                             '<span style="color: green;">🟢 במלאי</span>'}
                                     </td>
-                                    <td>${p.badge ? `<span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">${p.badge}</span>` : '-'}</td>
+                                    <td>${p.badge ? `<span style="background: #1E6FD9; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">${p.badge}</span>` : '-'}</td>
                                     <td>
                                         <button class="btn btn-sm btn-edit" onclick="editProduct(${p.id})">ערוך</button>
                                         <button class="btn btn-sm btn-delete" onclick="deleteProduct(${p.id})">מחק</button>
@@ -993,7 +1009,23 @@
             }
         }
 
+        async function loadCategoryOptions() {
+            const select = document.getElementById('productCategory');
+            if (!select || select.options.length > 1) return;
+            try {
+                const res = await fetch(`${API_URL}/api/categories`);
+                const cats = await res.json();
+                cats.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.value;
+                    opt.textContent = cat.label;
+                    select.appendChild(opt);
+                });
+            } catch (err) { console.error('Failed to load categories:', err); }
+        }
+
         function openProductModal(product = null) {
+            loadCategoryOptions();
             const modal = document.getElementById('productModal');
             const title = document.getElementById('productModalTitle');
             
@@ -1471,6 +1503,75 @@
         // Init
         checkAuth();
     
+
+        // ===== Categories Management =====
+        async function renderCategoriesList() {
+            const container = document.getElementById('categoriesList');
+            if (!container) return;
+            container.innerHTML = '<p style="color: #8A9BB0;">טוען...</p>';
+            try {
+                const res = await fetch(`${API_URL}/api/categories`);
+                const cats = await res.json();
+                if (cats.length === 0) {
+                    container.innerHTML = '<p style="color: #8A9BB0;">אין קטגוריות מוגדרות</p>';
+                    return;
+                }
+                container.innerHTML = cats.map(t => `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #1C2130; border-radius: 8px; margin-bottom: 8px;">
+                        <span style="color: #8A9BB0; font-size: 0.85rem; width: 100px;">${t.value}</span>
+                        <span style="color: #F0F2F5; flex: 1;">${t.label}</span>
+                        <button onclick="removeCategory('${t.value}')" style="background: rgba(220,53,69,0.2); color: #f77; border: 1px solid rgba(220,53,69,0.3); border-radius: 6px; padding: 4px 10px; cursor: pointer;">הסר</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = '<p style="color: #f77;">שגיאה בטעינה</p>';
+            }
+        }
+
+        async function addCategory() {
+            const value = document.getElementById('newCategoryValue').value.trim();
+            const label = document.getElementById('newCategoryLabel').value.trim();
+            const msg = document.getElementById('categoryMessage');
+            const token = localStorage.getItem('ecodos_token');
+
+            if (!value || !label) {
+                msg.style.display = 'block'; msg.style.color = '#f77';
+                msg.textContent = 'יש למלא גם ערך וגם תווית'; return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/api/admin/categories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ value, label })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                document.getElementById('newCategoryValue').value = '';
+                document.getElementById('newCategoryLabel').value = '';
+                msg.style.display = 'block'; msg.style.color = '#5ba3f5';
+                msg.textContent = 'נוסף בהצלחה';
+                setTimeout(() => msg.style.display = 'none', 2000);
+                renderCategoriesList();
+            } catch (err) {
+                msg.style.display = 'block'; msg.style.color = '#f77';
+                msg.textContent = err.message || 'שגיאה בהוספה';
+            }
+        }
+
+        async function removeCategory(value) {
+            const token = localStorage.getItem('ecodos_token');
+            if (!confirm('למחוק קטגוריה זו?')) return;
+            try {
+                await fetch(`${API_URL}/api/admin/categories/${value}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                renderCategoriesList();
+            } catch (err) {
+                alert('שגיאה במחיקה');
+            }
+        }
+
         // ===== Product Types Management =====
         async function renderProductTypesList() {
             const container = document.getElementById('productTypesList');
@@ -1544,7 +1645,7 @@
             const settingsBtn = document.querySelector('.tab[onclick*="settings"]');
             if (settingsBtn) {
                 settingsBtn.addEventListener('click', function() {
-                    setTimeout(renderProductTypesList, 100);
+                    setTimeout(() => { renderProductTypesList(); renderCategoriesList(); }, 100);
                 });
             }
         });
