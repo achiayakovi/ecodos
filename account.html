@@ -1929,7 +1929,7 @@
         // הצגת/הסתרת הכפתור
         window.addEventListener('scroll', function() {
             if (window.scrollY > 300) {
-                scrollTopBtn.classList.add('visible');
+                scrollTopBtnAcc.classList.add('visible');
             } else {
                 scrollTopBtn.classList.remove('visible');
             }
@@ -1962,7 +1962,7 @@
             const bottomNav = document.querySelector('.bottom-nav');
             const footer = document.querySelector('footer');
             const scrollBtn = document.querySelector('.scroll-top-btn');
-            const cartBtn = document.querySelector('.cart-btn');
+            const cartBtnAcc = document.querySelector('.cart-btn');
             
             if (window.innerWidth <= 768 && bottomNav) {
                 const navHeight = bottomNav.offsetHeight;
@@ -1986,7 +1986,7 @@
                 }
                 
                 if (scrollBtn) scrollBtn.style.bottom = buttonBottom + 'px';
-                if (cartBtn) cartBtn.style.bottom = buttonBottom + 'px';
+                if (cartBtn) cartBtnAcc.style.bottom = buttonBottom + 'px';
             } else {
                 // מחשב - בדוק אם הפוטר נראה בתחתית
                 if (footer) footer.style.marginBottom = '0';
@@ -2007,7 +2007,7 @@
                 }
                 
                 if (scrollBtn) scrollBtn.style.bottom = buttonBottom + 'px';
-                if (cartBtn) cartBtn.style.bottom = buttonBottom + 'px';
+                if (cartBtn) cartBtnAcc.style.bottom = buttonBottom + 'px';
             }
         }
 
@@ -2292,7 +2292,7 @@
         }
 
         // הצגת/הסתרת כפתור scroll
-        const scrollTopBtn = document.querySelector('.scroll-top-btn');
+        const scrollTopBtnAcc = document.querySelector('.scroll-top-btn');
         window.addEventListener('scroll', function() {
             if (window.scrollY > 300) {
                 scrollTopBtn.classList.add('visible');
@@ -2317,7 +2317,7 @@
             const bottomNav = document.querySelector('.bottom-nav');
             const footer = document.querySelector('footer');
             const scrollBtn = document.querySelector('.scroll-top-btn');
-            const cartBtn = document.querySelector('.cart-btn');
+            const cartBtnAcc = document.querySelector('.cart-btn');
             
             if (window.innerWidth <= 768 && bottomNav) {
                 const navHeight = bottomNav.offsetHeight;
@@ -2338,7 +2338,7 @@
                 }
                 
                 if (scrollBtn) scrollBtn.style.bottom = buttonBottom + 'px';
-                if (cartBtn) cartBtn.style.bottom = buttonBottom + 'px';
+                if (cartBtn) cartBtnAcc.style.bottom = buttonBottom + 'px';
             } else {
                 if (footer) footer.style.marginBottom = '0';
                 
