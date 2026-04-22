@@ -1846,7 +1846,28 @@
                 flex-direction: column;
             }
         }
-        </style>
+    
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #151820;
+            border: 1px solid #1C2130;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -1917,6 +1938,13 @@
         </div>
     </main>
 
+    <!-- Product Modal -->
+    <div id="productModal" class="modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content" style="background:#151820; border:1px solid #1C2130; border-radius:16px; max-width:700px; width:90%; max-height:85vh; overflow-y:auto; position:relative;">
+            <button onclick="closeModal()" style="position:absolute; top:15px; left:15px; background:none; border:none; color:#8A9BB0; font-size:2rem; cursor:pointer; line-height:1; z-index:1;">×</button>
+            <div id="modalBody" style="padding:30px;"></div>
+        </div>
+    </div>
 
     <div class="bottom-nav">
         <a href="/" class="active">בית</a>
@@ -2258,7 +2286,7 @@
                         </div>
                     </div>
                     
-                    <button class="details-btn" onclick='openModal(${JSON.stringify(product).replace(/'/g, "&#39;")})'>
+                    ${product.description ? `<button class="details-btn" onclick='openModal(${JSON.stringify(product).replace(/'/g, "&#39;")})'>
                         📋 פרטים נוספים
                     </button>
                     

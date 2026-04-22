@@ -49,6 +49,9 @@
         }
         .stat-card {
             background: #151820;
+            border: 1px solid #1C2130;
+            color: #F0F2F5;
+            background: #151820;
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -65,6 +68,8 @@
             flex-wrap: wrap;
         }
         .tab {
+            background: #1C2130;
+            color: #8A9BB0;
             background: #151820;
             border: none;
             padding: 12px 24px;
@@ -76,13 +81,16 @@
         }
         .tab:hover { background: rgba(30,111,217,0.1); }
         .tab.active {
+            background: #1E6FD9;
+            color: white;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
         
         /* Sections */
         .section {
-            background: #0D0F14; 
+            background: #0D0F14;
+            color: #F0F2F5; 
             display: none; 
             background: #151820; 
             padding: 30px; 
@@ -145,7 +153,8 @@
         th, td {
             padding: 12px;
             text-align: right;
-            border-bottom: 1px solid #ecf0f1;
+            border-bottom: 1px solid #1C2130;
+            color: #F0F2F5;
         }
         th {
             color: #F0F2F5;
@@ -155,6 +164,7 @@
             position: sticky;
             top: 0;
         }
+        tbody tr { background: #0D0F14; }
         tr:hover { background: #1C2130; }
         .clickable {
             cursor: pointer;
@@ -181,6 +191,7 @@
         .modal-content {
             background: #151820;
             color: #F0F2F5;
+            border: 1px solid #1C2130;
             background: #151820;
             padding: 30px;
             border-radius: 12px;
@@ -279,6 +290,7 @@
             .filters { flex-direction: column; width: 100%; }
             .filters input { min-width: 100%; }
         }
+        option { background: #1C2130; color: #F0F2F5; }
     </style>
 </head>
 <body>
