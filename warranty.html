@@ -1658,11 +1658,6 @@
                             <label for="product-type">סוג מוצר *</label>
                             <select id="product-type" required>
                                 <option value="">בחר סוג מוצר</option>
-                                <option value="hub">בקר ECODOS Hub</option>
-                                <option value="outlet">שקע חכם Type H</option>
-                                <option value="switch1">מתג חכם 1 כנף</option>
-                                <option value="switch2">מתג חכם 2 כנפיים</option>
-                                <option value="boiler">לוח בקרת דוד</option>
                             </select>
                         </div>
 
@@ -1758,6 +1753,26 @@
             document.getElementById('check-result').style.display = 'none';
             document.getElementById('register-result').style.display = 'none';
         }
+
+
+        // טעינת סוגי מוצר מה-API
+        async function loadProductTypes() {
+            const select = document.getElementById('product-type');
+            if (!select) return;
+            try {
+                const res = await fetch(`${API_URL}/api/product-types`);
+                const types = await res.json();
+                types.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.value;
+                    opt.textContent = t.label;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Failed to load product types:', err);
+            }
+        }
+        loadProductTypes();
 
         // Scroll reveal animation
         const observerOptions = {
