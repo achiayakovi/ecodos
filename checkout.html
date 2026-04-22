@@ -2194,21 +2194,21 @@
         });
 
         // כפתור חזרה למעלה
-        const scrollTopBtn = document.createElement('button');
-        scrollTopBtn.innerHTML = '↑';
-        scrollTopBtn.className = 'scroll-top-btn';
-        scrollTopBtn.setAttribute('aria-label', 'חזרה למעלה');
-        document.body.appendChild(scrollTopBtn);
+        const scrollTopBtn2 = document.createElement('button');
+        scrollTopBtn2.innerHTML = '↑';
+        scrollTopBtn2.className = 'scroll-top-btn';
+        scrollTopBtn2.setAttribute('aria-label', 'חזרה למעלה');
+        document.body.appendChild(scrollTopBtn2);
 
         window.addEventListener('scroll', () => {
             if (window.scrollY > 300) {
-                scrollTopBtn.classList.add('visible');
+                scrollTopBtn2.classList.add('visible');
             } else {
-                scrollTopBtn.classList.remove('visible');
+                scrollTopBtn2.classList.remove('visible');
             }
         });
 
-        scrollTopBtn.addEventListener('click', () => {
+        scrollTopBtn2.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 

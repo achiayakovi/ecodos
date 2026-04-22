@@ -1958,17 +1958,17 @@
 
         // כפתור חזרה למעלה
         // הצגת/הסתרת הכפתור
-        const scrollTopBtn = document.querySelector('.scroll-top-btn');
+        const scrollTopBtn2 = document.querySelector('.scroll-top-btn');
         window.addEventListener('scroll', function() {
             if (window.scrollY > 300) {
-                scrollTopBtn.classList.add('visible');
+                scrollTopBtn2.classList.add('visible');
             } else {
-                scrollTopBtn.classList.remove('visible');
+                scrollTopBtn2.classList.remove('visible');
             }
         });
 
         // לחיצה על הכפתור
-        scrollTopBtn.addEventListener('click', function() {
+        scrollTopBtn2.addEventListener('click', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 

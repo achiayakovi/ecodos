@@ -1539,12 +1539,15 @@
             }
         }
 
-        // טען את הרשימה כשה-tab נפתח
-        const origSwitchTab = switchTab;
-        function switchTab(tab) {
-            origSwitchTab(tab);
-            if (tab === 'settings') renderProductTypesList();
-        }
+        // טען את הרשימה כשה-tab נפתח - מוסיף listener ל-settings button
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsBtn = document.querySelector('.tab[onclick*="settings"]');
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', function() {
+                    setTimeout(renderProductTypesList, 100);
+                });
+            }
+        });
 
 </script>
 </body>
