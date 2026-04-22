@@ -2288,7 +2288,7 @@
                     
                     ${product.description ? `<button class="details-btn" onclick='openModal(${JSON.stringify(product).replace(/'/g, "&#39;")})'>
                         📋 פרטים נוספים
-                    </button>
+                    </button>` : ''}
                     
                     <div id="cart-btn-${product.id}">
                         ${inCart > 0 ? 
