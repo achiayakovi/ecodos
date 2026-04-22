@@ -1476,19 +1476,8 @@
             });
         }
 
-        // Scroll Spy - עדכון active לפי גלילה
-        window.addEventListener('scroll', function() {
-            const scrollPos = window.scrollY + 100;
-            const contactSection = document.getElementById('contact');
-            
-            if (contactSection && scrollPos >= contactSection.offsetTop) {
-                // אנחנו בסקשן צור קשר
-                setActive('#contact');
-            } else {
-                // אנחנו בראש הדף
-                setActive('/');
-            }
-        });
+        // Scroll Spy - עמוד אודות, active תמיד על about.html
+        // (אין scroll spy בדף זה)
 
         // כפתור חזרה למעלה
         const scrollTopBtn = document.createElement('button');
@@ -1509,7 +1498,7 @@
         // לחיצה על הכפתור
         scrollTopBtn.addEventListener('click', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            setActive('/');
+            setActive('about.html');
         });
 
         // כפתור עגלת קניות
