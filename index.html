@@ -1439,6 +1439,7 @@
 function showThankYou(event) {
     event.preventDefault();
     const form = event.target;
+    document.querySelector('.btn-submit').disabled = true;
     fetch('https://ecodos-backend-production.up.railway.app/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
