@@ -1710,6 +1710,7 @@
         </style>
 </head>
 <body>
+    <div class="toast-container" id="toastContainer"></div>
     <header>
         <div class="bsd">בס"ד</div>
         <div class="container">
@@ -2198,7 +2199,6 @@
         scrollTopBtn2.innerHTML = '↑';
         scrollTopBtn2.className = 'scroll-top-btn';
         scrollTopBtn2.setAttribute('aria-label', 'חזרה למעלה');
-        document.body.appendChild(scrollTopBtn2);
 
         window.addEventListener('scroll', () => {
             if (window.scrollY > 300) {
@@ -2213,92 +2213,6 @@
         });
 
         // כפתור עגלת קניות
-        const cartBtn = document.createElement('button');
-        cartBtn.innerHTML = '🛒<span class="badge" id="cartBadge">0</span>';
-        cartBtn.className = 'cart-btn';
-        cartBtn.setAttribute('aria-label', 'עגלת קניות');
-        cartBtn.onclick = function() { window.location.href = 'cart.html'; };
-        document.body.appendChild(cartBtn);
-
-        function updateCartBadge() {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cartBadge').textContent = total;
-        }
-
-        // עדכון דינמי של כפתורים וfooter
-        function updateFooterAndButtons() {
-            const bottomNav = document.querySelector('.bottom-nav');
-            const footer = document.querySelector('footer');
-            const scrollBtn = document.querySelector('.scroll-top-btn');
-            const cartBtn = document.querySelector('.cart-btn');
-            
-            if (window.innerWidth <= 768 && bottomNav) {
-                const navHeight = bottomNav.offsetHeight;
-                
-                if (footer) footer.style.marginBottom = navHeight + 'px';
-                
-                let buttonBottom = navHeight + 20;
-                
-                if (footer) {
-                    const footerRect = footer.getBoundingClientRect();
-                    const viewportHeight = window.innerHeight;
-                    const footerDistanceFromBottom = viewportHeight - footerRect.top;
-                    
-                    if (footerDistanceFromBottom > 0 && footerDistanceFromBottom < viewportHeight) {
-                        const footerHeight = footer.offsetHeight;
-                        buttonBottom = navHeight + footerHeight + 20;
-                    }
-                }
-                
-                if (scrollBtn) scrollBtn.style.bottom = buttonBottom + 'px';
-                if (cartBtn) cartBtn.style.bottom = buttonBottom + 'px';
-            } else {
-                if (footer) footer.style.marginBottom = '0';
-                
-                let buttonBottom = 30;
-                
-                if (footer) {
-                    const footerRect = footer.getBoundingClientRect();
-                    const viewportHeight = window.innerHeight;
-                    
-                    if (footerRect.top < viewportHeight) {
-                        const footerVisible = viewportHeight - footerRect.top;
-                        if (footerVisible > 0) {
-                            buttonBottom = footerVisible + 20;
-                        }
-                    }
-                }
-                
-                if (scrollBtn) scrollBtn.style.bottom = buttonBottom + 'px';
-                if (cartBtn) cartBtn.style.bottom = buttonBottom + 'px';
-            }
-        }
-
-        // הזזת כפתור איזור אישי בגלילה - רק במובייל
-        function updateAccountButtonPosition() {
-            if (window.innerWidth <= 768) {
-                const accountLink = document.querySelector('.account-link');
-                if (accountLink) {
-                    if (window.scrollY > 140) {
-                        accountLink.style.top = '10px';
-                    } else {
-                        accountLink.style.top = '150px';
-                    }
-                }
-            }
-        }
-
-        // אתחול
-        updateFooterAndButtons();
-        updateAccountButtonPosition();
-        window.addEventListener('resize', updateFooterAndButtons);
-        window.addEventListener('resize', updateAccountButtonPosition);
-        window.addEventListener('scroll', updateFooterAndButtons);
-        window.addEventListener('scroll', updateAccountButtonPosition);
-        loadOrderSummary();
-        loadUserProfile();
-        updateCartBadge();
     </script>
     <script src="accessibility.js">
 </script>

@@ -1561,6 +1561,7 @@
     </style>
 </head>
 <body>
+    <div class="toast-container" id="toastContainer"></div>
     <header>
         <div class="bsd">בס"ד</div>
         <div class="container">
@@ -2305,7 +2306,7 @@
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify({
-                        serial_number: serial_number: serialNumber,
+                        serial_number: serialNumber,
                     productType: productType,
                         fullName: fullName,
                         phone: phone,
@@ -2346,39 +2347,7 @@
             }
         }
 
-        // כפתור חזרה למעלה
-        const scrollTopBtn = document.createElement('button');
-        scrollTopBtn.innerHTML = '↑';
-        scrollTopBtn.className = 'scroll-top-btn';
-        scrollTopBtn.setAttribute('aria-label', 'חזרה למעלה');
-        document.body.appendChild(scrollTopBtn);
-
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
-            }
-        });
-
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
         // כפתור עגלת קניות
-        const cartBtn = document.createElement('button');
-        cartBtn.innerHTML = '🛒<span class="badge" id="cartBadge">0</span>';
-        cartBtn.className = 'cart-btn';
-        cartBtn.setAttribute('aria-label', 'עגלת קניות');
-        cartBtn.onclick = function() { window.location.href = 'cart.html'; };
-        document.body.appendChild(cartBtn);
-
-        function updateCartBadge() {
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cartBadge').textContent = total;
-        }
-        updateCartBadge();
 
         function updateFooterAndButtons() {
             const bottomNav = document.querySelector('.bottom-nav');
