@@ -2037,8 +2037,7 @@
         window.addEventListener('scroll', updateAccountButtonPosition);
         window.addEventListener('resize', updateAccountButtonPosition);
 updateAccountButtonPosition();
-        loadOrderSummary();
-        loadUserProfile();
+
     </script>
     <script src="accessibility.js">
 
@@ -2211,6 +2210,8 @@ updateAccountButtonPosition();
         scrollTopBtn2.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+            loadOrderSummary();
+        loadUserProfile();
 
         // כפתור עגלת קניות
     </script>
