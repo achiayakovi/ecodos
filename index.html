@@ -800,6 +800,136 @@
             margin: 20px 0;
         }
 
+
+        /* Waitlist Section */
+        .waitlist-section {
+            padding: 80px 0;
+            margin: 40px 0;
+        }
+        .waitlist-card {
+            background: linear-gradient(135deg, #1E6FD9 0%, #1455A8 100%);
+            border-radius: 30px;
+            padding: 60px 40px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 50px rgba(30,111,217,0.3);
+        }
+        .waitlist-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 100px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+        .waitlist-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: white;
+        }
+        .waitlist-subtitle {
+            font-size: 1.15rem;
+            margin-bottom: 35px;
+            color: rgba(255,255,255,0.9);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .waitlist-form {
+            max-width: 520px;
+            margin: 35px auto 0;
+        }
+        .waitlist-form input[type="text"],
+        .waitlist-form input[type="email"],
+        .waitlist-form input[type="tel"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .waitlist-form input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        .waitlist-form input:focus {
+            outline: none;
+            border-color: white;
+            background: rgba(255,255,255,0.15);
+        }
+        .waitlist-form .form-row.two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .waitlist-form .form-row.two-cols input {
+            margin-bottom: 0;
+        }
+        .consent-row {
+            margin: 18px 0 28px;
+            text-align: right;
+        }
+        .consent-row label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: rgba(255,255,255,0.95);
+            font-size: 0.95rem;
+            cursor: pointer;
+            line-height: 1.5;
+        }
+        .consent-row input[type="checkbox"] {
+            margin-top: 4px;
+            flex-shrink: 0;
+            accent-color: white;
+            width: 18px;
+            height: 18px;
+        }
+        .waitlist-submit {
+            width: 100%;
+            padding: 18px;
+            background: white;
+            color: #1E6FD9;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .waitlist-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .waitlist-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .waitlist-success {
+            background: rgba(255,255,255,0.95);
+            color: #1E6FD9;
+            padding: 30px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        @media (max-width: 768px) {
+            .waitlist-card { padding: 40px 24px; }
+            .waitlist-card h2 { font-size: 1.8rem; }
+            .waitlist-form .form-row.two-cols { grid-template-columns: 1fr; }
+        }
+
         /* Contact Section */
         .contact {
             padding: 60px 0;
@@ -1349,9 +1479,29 @@
                 </div>
             </section>
 
-<section class="price-section scroll-reveal">
-    <h2>החנות שלנו מחכה לכם</h2>
-    <a href="shop.html" style="display: inline-block; padding: 20px 50px; background: white; color: #1E6FD9; text-decoration: none; border-radius: 15px; font-size: 1.3rem; font-weight: 600; margin-top: 20px; transition: all 0.3s ease;">לחנות</a>
+<section class="waitlist-section scroll-reveal" id="waitlist">
+    <div class="waitlist-card">
+        <div class="waitlist-badge">בקרוב</div>
+        <h2>המערכת משוחררת בקרוב</h2>
+        <p class="waitlist-subtitle">חברי רשימת ההמתנה מקבלים הודעה ראשונה ומחיר השקה מיוחד</p>
+        <form class="waitlist-form" onsubmit="submitWaitlist(event, 'homepage')">
+            <input type="text" name="name" placeholder="שם מלא" required autocomplete="name">
+            <div class="form-row two-cols">
+                <input type="tel" name="phone" placeholder="טלפון" required pattern="[0-9\-+\s]{9,}" autocomplete="tel">
+                <input type="email" name="email" placeholder="אימייל" required autocomplete="email">
+            </div>
+            <div class="consent-row">
+                <label>
+                    <input type="checkbox" name="consent" required>
+                    <span>אני מאשר/ת קבלת עדכונים</span>
+                </label>
+            </div>
+            <button type="submit" class="waitlist-submit">הצטרפו לרשימת ההמתנה</button>
+        </form>
+        <div class="waitlist-success" style="display:none;">
+            ✓ נרשמת בהצלחה! נחזור אליך עם פרטי ההשקה.
+        </div>
+    </div>
 </section>
 
             <section class="contact scroll-reveal" id="contact">
@@ -1670,6 +1820,45 @@ function showThankYou(event) {
     window.addEventListener('resize', updateAccountButtonPosition);
     updateAccountButtonPosition();
 
-</script>
+
+    async function submitWaitlist(event, source) {
+        event.preventDefault();
+        const form = event.target;
+        const card = form.closest('.waitlist-card');
+        const formData = new FormData(form);
+        const data = {
+            name: formData.get('name'),
+            phone: formData.get('phone'),
+            email: formData.get('email'),
+            consent: formData.get('consent') === 'on',
+            source: source
+        };
+        const submitBtn = form.querySelector('.waitlist-submit');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'שולח...';
+        try {
+            const response = await fetch('/api/waitlist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                form.style.display = 'none';
+                card.querySelector('.waitlist-success').style.display = 'block';
+            } else {
+                let errMsg = 'שגיאה ברישום, נסו שוב';
+                try { const err = await response.json(); if (err.error) errMsg = err.error; } catch {}
+                alert(errMsg);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        } catch (e) {
+            alert('שגיאה ברישום, אנא בדקו חיבור לאינטרנט ונסו שוב');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+    </script>
 </body>
 </html>
