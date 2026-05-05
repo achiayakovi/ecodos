@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>פאנל ניהול - ECODOS</title>
     <link rel="icon" type="image/png" href="favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Rubik', sans-serif;
+            font-family: 'Heebo', sans-serif;
             background: #0D0F14;
             padding: 20px;
         }
@@ -333,6 +333,7 @@
             <button class="tab" onclick="switchTab('stock')">מלאי</button>
             <button class="tab" onclick="switchTab('users')">משתמשים</button>
             <button class="tab" onclick="switchTab('settings')">הגדרות</button>
+            <button class="tab" onclick="switchTab('waitlist')">רשימת תפוצה</button>
         </div>
 
         <!-- Warranties Section -->
@@ -460,7 +461,75 @@
             </div>
         </div>
 
-    <!-- Product Modal -->
+        <!-- Waitlist Section -->
+        <div id="waitlistSection" class="section">
+            <h2>רשימת תפוצה</h2>
+
+            <!-- Stats -->
+            <div id="waitlistStats" style="display:flex;gap:15px;margin:20px 0;flex-wrap:wrap;">
+                <div style="background:#1C2130;border:1px solid #2A3040;padding:15px 20px;border-radius:10px;flex:1;min-width:140px;">
+                    <div style="color:#8A9BB0;font-size:0.85rem;margin-bottom:5px;">סה"כ רישומים</div>
+                    <div style="color:#F0F2F5;font-size:1.6rem;font-weight:700;" id="statTotal">0</div>
+                </div>
+                <div style="background:#1C2130;border:1px solid #2A3040;padding:15px 20px;border-radius:10px;flex:1;min-width:140px;">
+                    <div style="color:#8A9BB0;font-size:0.85rem;margin-bottom:5px;">ממתינים לפניה</div>
+                    <div style="color:#F0F2F5;font-size:1.6rem;font-weight:700;" id="statPending">0</div>
+                </div>
+                <div style="background:#1C2130;border:1px solid #2A3040;padding:15px 20px;border-radius:10px;flex:1;min-width:140px;">
+                    <div style="color:#8A9BB0;font-size:0.85rem;margin-bottom:5px;">פנו אליהם</div>
+                    <div style="color:#F0F2F5;font-size:1.6rem;font-weight:700;" id="statContacted">0</div>
+                </div>
+                <div style="background:#1C2130;border:1px solid #2A3040;padding:15px 20px;border-radius:10px;flex:1;min-width:140px;">
+                    <div style="color:#8A9BB0;font-size:0.85rem;margin-bottom:5px;">הומרו ללקוחות</div>
+                    <div style="color:#F0F2F5;font-size:1.6rem;font-weight:700;color:#1E6FD9;" id="statConverted">0</div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="top-bar" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
+                <div class="filters" style="display:flex;flex-wrap:wrap;gap:10px;flex:1;">
+                    <input type="text" id="searchWaitlist" placeholder="חיפוש שם / טלפון / אימייל..." oninput="filterWaitlist()" style="min-width:220px;">
+                    <select id="filterWaitlistStatus" onchange="filterWaitlist()">
+                        <option value="">כל הסטטוסים</option>
+                        <option value="pending">ממתין</option>
+                        <option value="contacted">נוצר קשר</option>
+                        <option value="converted">הומר ללקוח</option>
+                    </select>
+                    <select id="filterWaitlistSource" onchange="filterWaitlist()">
+                        <option value="">כל המקורות</option>
+                        <option value="homepage">עמוד הבית</option>
+                        <option value="how-it-works">איך זה עובד</option>
+                        <option value="shop">חנות</option>
+                    </select>
+                    <select id="filterWaitlistUnsub" onchange="filterWaitlist()">
+                        <option value="">כל מצבי ההסרה</option>
+                        <option value="active">פעילים בלבד</option>
+                        <option value="email_unsub">הסירו מייל</option>
+                        <option value="phone_unsub">הסירו טלפון</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="exportWaitlistToCSV()">📥 ייצוא CSV</button>
+            </div>
+
+            <!-- Date filters -->
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:15px;background:#151820;padding:15px;border-radius:10px;">
+                <span style="color:#8A9BB0;font-size:0.9rem;">תאריך רישום:</span>
+                <button class="btn btn-sm" style="background:#1C2130;color:#F0F2F5;" onclick="setWaitlistDateRange('all')">הכל</button>
+                <button class="btn btn-sm" style="background:#1C2130;color:#F0F2F5;" onclick="setWaitlistDateRange('today')">היום</button>
+                <button class="btn btn-sm" style="background:#1C2130;color:#F0F2F5;" onclick="setWaitlistDateRange('week')">7 ימים אחרונים</button>
+                <button class="btn btn-sm" style="background:#1C2130;color:#F0F2F5;" onclick="setWaitlistDateRange('month')">30 ימים אחרונים</button>
+                <span style="color:#8A9BB0;margin-right:10px;">או:</span>
+                <input type="date" id="waitlistDateFrom" onchange="filterWaitlist()" style="background:#1C2130;color:#F0F2F5;border:1px solid #2A3040;padding:6px 10px;border-radius:6px;">
+                <span style="color:#8A9BB0;">עד</span>
+                <input type="date" id="waitlistDateTo" onchange="filterWaitlist()" style="background:#1C2130;color:#F0F2F5;border:1px solid #2A3040;padding:6px 10px;border-radius:6px;">
+                <span id="waitlistFilterCount" style="color:#8A9BB0;font-size:0.9rem;margin-right:auto;"></span>
+            </div>
+
+            <div id="waitlistLoading" class="loading">טוען...</div>
+            <div id="waitlistContent"></div>
+        </div>
+
+        <!-- Product Modal -->
     <div class="modal" id="productModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -678,6 +747,7 @@
             else if (tab === 'products') loadProducts();
             else if (tab === 'stock') loadStock();
             else if (tab === 'users') loadUsers();
+            else if (tab === 'waitlist') loadWaitlist();
         }
 
         async function loadDashboard() {
@@ -1678,6 +1748,225 @@
             }
         });
 
-</script>
+
+        // ===== Waitlist Management =====
+        let allWaitlist = [];
+
+        async function loadWaitlist() {
+            const token = localStorage.getItem('token');
+            const loading = document.getElementById('waitlistLoading');
+            const content = document.getElementById('waitlistContent');
+            loading.style.display = 'block';
+            content.innerHTML = '';
+            try {
+                const res = await fetch(`${API_URL}/api/admin/waitlist`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load');
+                allWaitlist = await res.json();
+                loading.style.display = 'none';
+                renderWaitlist(allWaitlist);
+                updateWaitlistStats();
+            } catch (err) {
+                console.error(err);
+                loading.style.display = 'none';
+                content.innerHTML = '<div style="color:#ff8088;padding:20px;text-align:center;">שגיאה בטעינת הרשימה</div>';
+            }
+        }
+
+        function updateWaitlistStats() {
+            document.getElementById('statTotal').textContent = allWaitlist.length;
+            document.getElementById('statPending').textContent = allWaitlist.filter(w => w.status === 'pending').length;
+            document.getElementById('statContacted').textContent = allWaitlist.filter(w => w.status === 'contacted').length;
+            document.getElementById('statConverted').textContent = allWaitlist.filter(w => w.status === 'converted').length;
+        }
+
+        function setWaitlistDateRange(range) {
+            const today = new Date();
+            const fmt = (d) => d.toISOString().split('T')[0];
+            const fromInput = document.getElementById('waitlistDateFrom');
+            const toInput = document.getElementById('waitlistDateTo');
+            if (range === 'all') {
+                fromInput.value = '';
+                toInput.value = '';
+            } else if (range === 'today') {
+                fromInput.value = fmt(today);
+                toInput.value = fmt(today);
+            } else if (range === 'week') {
+                const weekAgo = new Date(today);
+                weekAgo.setDate(today.getDate() - 7);
+                fromInput.value = fmt(weekAgo);
+                toInput.value = fmt(today);
+            } else if (range === 'month') {
+                const monthAgo = new Date(today);
+                monthAgo.setDate(today.getDate() - 30);
+                fromInput.value = fmt(monthAgo);
+                toInput.value = fmt(today);
+            }
+            filterWaitlist();
+        }
+
+        function getFilteredWaitlist() {
+            const search = document.getElementById('searchWaitlist').value.trim().toLowerCase();
+            const status = document.getElementById('filterWaitlistStatus').value;
+            const source = document.getElementById('filterWaitlistSource').value;
+            const unsub = document.getElementById('filterWaitlistUnsub').value;
+            const dateFrom = document.getElementById('waitlistDateFrom').value;
+            const dateTo = document.getElementById('waitlistDateTo').value;
+            let filtered = allWaitlist;
+            if (search) {
+                filtered = filtered.filter(w =>
+                    (w.name || '').toLowerCase().includes(search) ||
+                    (w.phone || '').toLowerCase().includes(search) ||
+                    (w.email || '').toLowerCase().includes(search)
+                );
+            }
+            if (status) filtered = filtered.filter(w => w.status === status);
+            if (source) filtered = filtered.filter(w => w.source === source);
+            if (unsub === 'active') filtered = filtered.filter(w => !w.email_unsubscribed && !w.phone_unsubscribed);
+            else if (unsub === 'email_unsub') filtered = filtered.filter(w => w.email_unsubscribed);
+            else if (unsub === 'phone_unsub') filtered = filtered.filter(w => w.phone_unsubscribed);
+            if (dateFrom) {
+                const fromDate = new Date(dateFrom + 'T00:00:00');
+                filtered = filtered.filter(w => new Date(w.created_at) >= fromDate);
+            }
+            if (dateTo) {
+                const toDate = new Date(dateTo + 'T23:59:59');
+                filtered = filtered.filter(w => new Date(w.created_at) <= toDate);
+            }
+            return filtered;
+        }
+
+        function filterWaitlist() {
+            const filtered = getFilteredWaitlist();
+            document.getElementById('waitlistFilterCount').textContent =
+                `מציג ${filtered.length} מתוך ${allWaitlist.length}`;
+            renderWaitlist(filtered);
+        }
+
+        function escapeWaitlistHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+        function renderWaitlist(list) {
+            const content = document.getElementById('waitlistContent');
+            if (list.length === 0) {
+                content.innerHTML = '<div style="text-align:center;padding:40px;color:#8A9BB0;">אין רישומים מתאימים לסינון</div>';
+                return;
+            }
+            const sourceLabels = { homepage: 'בית', 'how-it-works': 'איך זה עובד', shop: 'חנות', unknown: 'לא ידוע' };
+            const rows = list.map(w => {
+                const date = new Date(w.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                const time = new Date(w.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                const emailUnsub = w.email_unsubscribed
+                    ? '<span title="הסיר מייל" style="color:#ff8088;">📧✗</span>'
+                    : '<span title="פעיל למייל" style="color:#5ba3f5;">📧✓</span>';
+                const phoneUnsub = w.phone_unsubscribed
+                    ? '<span title="הסיר טלפון" style="color:#ff8088;">📞✗</span>'
+                    : '<span title="פעיל לשיחות" style="color:#5ba3f5;">📞✓</span>';
+                return `<tr>
+                    <td>${escapeWaitlistHtml(w.name)}</td>
+                    <td><a href="tel:${escapeWaitlistHtml(w.phone)}" style="color:#5ba3f5;">${escapeWaitlistHtml(w.phone)}</a></td>
+                    <td><a href="mailto:${escapeWaitlistHtml(w.email)}" style="color:#5ba3f5;">${escapeWaitlistHtml(w.email)}</a></td>
+                    <td>${sourceLabels[w.source] || w.source}</td>
+                    <td style="white-space:nowrap;font-size:0.85rem;">${date}<br><span style="color:#8A9BB0;">${time}</span></td>
+                    <td>
+                        <select onchange="updateWaitlistStatus(${w.id}, this.value)" style="background:#1C2130;color:#F0F2F5;border:1px solid #2A3040;padding:5px 8px;border-radius:5px;font-size:0.85rem;">
+                            <option value="pending" ${w.status === 'pending' ? 'selected' : ''}>ממתין</option>
+                            <option value="contacted" ${w.status === 'contacted' ? 'selected' : ''}>נוצר קשר</option>
+                            <option value="converted" ${w.status === 'converted' ? 'selected' : ''}>הומר ללקוח</option>
+                        </select>
+                    </td>
+                    <td style="white-space:nowrap;">${emailUnsub} ${phoneUnsub}</td>
+                    <td><button class="btn btn-sm btn-delete" onclick="deleteWaitlistEntry(${w.id})">🗑️</button></td>
+                </tr>`;
+            }).join('');
+            content.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>שם</th>
+                                <th>טלפון</th>
+                                <th>אימייל</th>
+                                <th>מקור</th>
+                                <th>תאריך</th>
+                                <th>סטטוס</th>
+                                <th>הסרות</th>
+                                <th>פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function updateWaitlistStatus(id, status) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/waitlist/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                if (!res.ok) throw new Error('Failed');
+                const item = allWaitlist.find(w => w.id === id);
+                if (item) item.status = status;
+                updateWaitlistStats();
+            } catch (err) {
+                alert('שגיאה בעדכון הסטטוס');
+                loadWaitlist();
+            }
+        }
+
+        async function deleteWaitlistEntry(id) {
+            if (!confirm('למחוק את הרישום? פעולה זו לא הפיכה.')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/waitlist/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed');
+                allWaitlist = allWaitlist.filter(w => w.id !== id);
+                filterWaitlist();
+                updateWaitlistStats();
+            } catch (err) {
+                alert('שגיאה במחיקה');
+            }
+        }
+
+        function exportWaitlistToCSV() {
+            const list = getFilteredWaitlist();
+            if (list.length === 0) {
+                alert('אין נתונים לייצוא');
+                return;
+            }
+            const sourceLabels = { homepage: 'בית', 'how-it-works': 'איך זה עובד', shop: 'חנות' };
+            const statusLabels = { pending: 'ממתין', contacted: 'נוצר קשר', converted: 'הומר ללקוח' };
+            const headers = ['שם', 'טלפון', 'אימייל', 'מקור', 'סטטוס', 'הסיר מייל', 'הסיר טלפון', 'תאריך רישום'];
+            const rows = list.map(w => [
+                w.name,
+                w.phone,
+                w.email,
+                sourceLabels[w.source] || w.source,
+                statusLabels[w.status] || w.status,
+                w.email_unsubscribed ? 'כן' : 'לא',
+                w.phone_unsubscribed ? 'כן' : 'לא',
+                new Date(w.created_at).toLocaleString('he-IL')
+            ]);
+            let csv = '\uFEFF' + headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',') + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `waitlist_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+    </script>
 </body>
 </html>
