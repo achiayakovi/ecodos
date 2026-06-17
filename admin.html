@@ -826,7 +826,7 @@
                         </tr>
                         ${warranties.map(w => `
                             <tr>
-                                <td class="clickable" onclick="editMachineNumber(${w.id}, '${w.machine_number}')">${w.machine_number}</td>
+                                <td class="clickable" onclick="editMachineNumber(${w.id}, '${w.serial_number}')">${w.serial_number}</td>
                                 <td>${w.customer_name}</td>
                                 <td>${w.customer_phone}</td>
                                 <td class="clickable" onclick="openEditDatesModal(${w.id}, '${w.purchase_date}', '${w.expiry_date}')">${new Date(w.purchase_date).toLocaleDateString('he-IL')}</td>
@@ -860,7 +860,7 @@
             if (status) filtered = filtered.filter(w => w.status === status);
             if (search) {
                 filtered = filtered.filter(w => 
-                    w.machine_number.toLowerCase().includes(search) ||
+                    w.serial_number.toLowerCase().includes(search) ||
                     w.customer_name.toLowerCase().includes(search) ||
                     w.customer_phone.includes(search)
                 );
@@ -902,7 +902,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ machine_number })
+                    body: JSON.stringify({ serial_number: machine_number })
                 });
                 showMessage('מספר מכשיר עודכן', 'success');
                 loadWarranties();
@@ -935,7 +935,7 @@
 
             const headers = ['מספר מכשיר', 'שם', 'טלפון', 'תאריך רכישה', 'תוקף', 'סטטוס'];
             const rows = allWarranties.map(w => [
-                w.machine_number,
+                w.serial_number,
                 w.customer_name,
                 w.customer_phone,
                 new Date(w.purchase_date).toLocaleDateString('he-IL'),
