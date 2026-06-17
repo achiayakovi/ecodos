@@ -1734,6 +1734,8 @@
     </footer>
 
     <script>
+        const API_URL = 'https://ecodos-backend-production.up.railway.app';
+
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
@@ -1992,7 +1994,6 @@
         updateAccountButtonPosition();
     </script>
     <script>
-        const API_URL = 'https://ecodos-backend-production.up.railway.app';
         
         // Calendar state
         let currentMonth = new Date().getMonth();
