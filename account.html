@@ -1628,6 +1628,69 @@
             margin-bottom: 15px;
             display: none;
         }
+
+        /* Login/Register card width (match ponpela) */
+        .auth-container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #151820;
+            border: 1px solid #1C2130;
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #1C2130;
+            color: #F0F2F5;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast.hiding {
+            animation: slideOutRight 0.3s ease;
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+        .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .toast.success { border-right: 4px solid #28a745; }
+        .toast.success .toast-icon { color: #28a745; }
+        .toast.error { border-right: 4px solid #dc3545; }
+        .toast.error .toast-icon { color: #dc3545; }
+        .toast.info { border-right: 4px solid #1E6FD9; }
+        .toast.info .toast-icon { color: #1E6FD9; }
+        .toast-message {
+            flex: 1;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        @media (max-width: 768px) {
+            .toast-container { top: 10px; right: 10px; left: 10px; }
+            .toast { min-width: auto; }
+        }
         </style>
 </head>
 <body>
