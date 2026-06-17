@@ -138,8 +138,8 @@
 
         body {
             font-family: 'Rubik', sans-serif;
-            background: #0D0F14;
-            color: #F0F2F5;
+            background: #E8EFFF;
+            color: #1A2332;
             overflow-x: hidden;
             min-height: 100vh;
             display: flex;
@@ -158,7 +158,7 @@
 
         /* Header */
         header {
-            background: #151820; border-bottom: 1px solid #1C2130;
+            background: #FFFFFF; border-bottom: 1px solid #CFD7F0;
             padding: 25px 0;
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
             animation: slideDown 0.6s ease-out;
@@ -171,7 +171,7 @@
             top: 10px;
             right: 20px;
             font-size: 0.9rem;
-            color: #8A9BB0;
+            color: #5A6C7D;
             font-weight: 500;
         }
 
@@ -212,9 +212,9 @@
 
         /* Navigation Menu */
         nav {
-            background: #1C2130;
+            background: #CFD7F0;
             padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid #95A3D9;
             position: relative;
         }
 
@@ -224,7 +224,7 @@
             top: 50%;
             transform: translateY(-50%);
             text-decoration: none;
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 1.1rem;
             font-weight: 600;
             padding: 10px 20px;
@@ -236,8 +236,13 @@
             z-index: 100;
         }
 
+        .account-link {
+            border: 1.5px solid #C2A875;
+        }
+
         .account-link:hover {
-            background: rgba(30,111,217,0.1);
+            background: #C2A875;
+            color: #1A2332;
         }
 
         .nav-menu {
@@ -250,7 +255,7 @@
 
         .nav-menu a {
             text-decoration: none;
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 1.1rem;
             font-weight: 600;
             padding: 10px 20px;
@@ -259,12 +264,12 @@
         }
 
         .nav-menu a:hover {
-            background: rgba(30,111,217,0.1); color: #F0F2F5;
+            background: rgba(30,111,217,0.1); color: #1A2332;
             transform: translateY(-2px);
         }
 
         .nav-menu a.active {
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
         }
 
@@ -274,7 +279,7 @@
             background: none;
             border: none;
             font-size: 1.8rem;
-            color: #F0F2F5;
+            color: #1A2332;
             cursor: pointer;
             padding: 10px;
         }
@@ -300,7 +305,7 @@
                 left: 15px;
                 top: 130px;
                 transform: none;
-                background: #151820;
+                background: #FFFFFF;
                 border: 1px solid rgba(30,111,217,0.4);
                 box-shadow: 0 4px 15px rgba(0,0,0,0.4);
                 padding: 10px;
@@ -330,7 +335,7 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: #1C2130;
+                background: #CFD7F0;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
                 padding: 15px 0;
                 z-index: 1000;
@@ -344,7 +349,7 @@
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
-                color: #F0F2F5;
+                color: #1A2332;
                 font-size: 1.1rem;
                 font-weight: 600;
                 padding: 10px 20px;
@@ -415,7 +420,7 @@
         .hero h1 {
             font-size: 3.5rem;
             font-weight: 700;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             animation: bounceIn 1.2s ease-out;
@@ -440,7 +445,7 @@
 
         .hero-subtitle {
             font-size: 1.5rem;
-            color: #C0C8D2;
+            color: #5A6C7D;
             font-weight: 500;
             margin-bottom: 40px;
             animation: fadeIn 1.5s ease-out;
@@ -485,8 +490,8 @@
         }
 
         .benefits-card {
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 30px;
             padding: 60px;
             text-align: center;
@@ -495,7 +500,7 @@
 
         .benefits-card h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -524,7 +529,7 @@
         .benefits-list li {
             font-size: 1.3rem;
             padding: 20px;
-            background: #1C2130;
+            background: #CFD7F0;
             border-radius: 15px;
             border-right: 4px solid #1E6FD9;
             transition: all 0.3s ease;
@@ -539,7 +544,7 @@
             content: "✓";
             display: inline-block;
             margin-left: 10px;
-            color: #1E6FD9;
+            color: #C2A875;
             font-weight: bold;
             font-size: 1.4rem;
         }
@@ -547,8 +552,8 @@
         /* Remote Section */
         .remote-section {
             padding: 80px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             margin: 40px 0;
             border-radius: 30px;
         }
@@ -582,7 +587,7 @@
 
         .remote-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -602,8 +607,8 @@
         /* Cleaning Section */
         .cleaning-section {
             padding: 80px 0;
-            background: #1C2130;
-            border: 1px solid #2A3040;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.3);
@@ -638,7 +643,7 @@
 
         .cleaning-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -652,14 +657,14 @@
         .cleaning-text p {
             font-size: 1.2rem;
             line-height: 1.8;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         /* Modes Section */
         .modes-section {
             padding: 80px 0;
-            background: #1C2130;
-            border: 1px solid #2A3040;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.3);
@@ -690,7 +695,7 @@
 
         .modes-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -704,15 +709,15 @@
         .modes-text p {
             font-size: 1.2rem;
             line-height: 1.8;
-            color: #8A9BB0;
+            color: #5A6C7D;
             margin-bottom: 15px;
         }
 
         /* Accessories Section */
         .accessories-section {
             padding: 80px 0;
-            background: #1C2130;
-            border: 1px solid #2A3040;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.3);
@@ -735,7 +740,7 @@
 
         .accessories-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -771,8 +776,8 @@
         /* Package Section */
         .package {
             padding: 60px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             margin: 40px 0;
             border-radius: 30px;
         }
@@ -780,7 +785,7 @@
         .package h2 {
             text-align: center;
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -793,7 +798,7 @@
 
         .package-item {
             padding: 20px;
-            background: #1C2130;
+            background: #CFD7F0;
             border-radius: 15px;
             border-right: 4px solid #1E6FD9;
             transition: all 0.3s ease;
@@ -839,7 +844,7 @@
             content: "✓";
             display: inline-block;
             margin-left: 10px;
-            color: #1E6FD9;
+            color: #C2A875;
             font-weight: bold;
             font-size: 1.2rem;
         }
@@ -848,7 +853,7 @@
         .price-section {
             text-align: center;
             padding: 60px 0;
-            background: linear-gradient(135deg, #1E6FD9 0%, #1455A8 100%);
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
             border-radius: 30px;
             margin: 40px 0;
@@ -881,7 +886,7 @@
             margin: 40px 0;
         }
         .waitlist-card {
-            background: linear-gradient(135deg, #1E6FD9 0%, #1455A8 100%);
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             border-radius: 30px;
             padding: 60px 40px;
             text-align: center;
@@ -1007,8 +1012,8 @@
         /* Contact Section */
         .contact {
             padding: 60px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 30px;
             margin: 40px 0 120px 0;
         }
@@ -1016,7 +1021,7 @@
         .contact h2 {
             text-align: center;
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -1043,17 +1048,17 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 15px;
-            background: #1C2130;
-            border: 1px solid #242938;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             border-radius: 10px;
-            color: #F0F2F5;
+            color: #1A2332;
             font-family: 'Rubik', sans-serif;
             font-size: 1rem;
             transition: border-color 0.3s ease;
@@ -1094,7 +1099,7 @@
             display: inline-block;
             margin-top: 10px;
             padding: 15px 30px;
-            background: #1C2130; border: 1px solid #242938;
+            background: #1E6FD9; border: none;
             color: white;
             text-decoration: none;
             border-radius: 10px;
@@ -1154,8 +1159,8 @@
 
         /* Footer */
         footer {
-            background: #151820; border-top: 1px solid #1C2130;
-            color: white;
+            background: #CFD7F0; border-top: 1px solid #95A3D9;
+            color: #1A2332;
             text-align: center;
             padding: 15px 0;
             margin-top: 60px;
@@ -1349,9 +1354,10 @@
             right: 30px;
             width: 50px;
             height: 50px;
-            background: #1C2130; border: 1px solid #242938;
-            color: #8A9BB0;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%); border: none;
+            color: #FFFFFF;
             border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(30,111,217,0.4);
             font-size: 24px;
             cursor: pointer;
             opacity: 0;
@@ -1367,7 +1373,7 @@
 
         .scroll-top-btn:hover {
             transform: translateY(-5px);
-            border-color: #1E6FD9; color: #1E6FD9;
+            background: #1455A8; color: #FFFFFF;
         }
 
         @media (max-width: 768px) {
@@ -1386,7 +1392,7 @@
             left: 30px;
             width: 50px;
             height: 50px;
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
             border: none;
             border-radius: 50%;
@@ -1426,6 +1432,33 @@
                 height: 45px;
             }
         }
+
+        /* === נגיעת זהב: פס קצר מתחת לכותרות מקטעים === */
+        .benefits-card h2, .remote-text h2, .cleaning-text h2,
+        .modes-text h2, .accessories-text h2, .package h2,
+        .contact h2, .price-section h2, .waitlist-card h2 {
+            display: inline-block;
+            position: relative;
+            padding-bottom: 14px;
+        }
+        .benefits-card h2::after, .remote-text h2::after, .cleaning-text h2::after,
+        .modes-text h2::after, .accessories-text h2::after, .package h2::after,
+        .contact h2::after, .price-section h2::after, .waitlist-card h2::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            border-radius: 2px;
+            background: #C2A875;
+        }
+
+        /* === פס זהב עליון לכל מקטע ראשי === */
+        .benefits-card, .remote-section, .cleaning-section,
+        .modes-section, .accessories-section, .contact {
+            border-top: 4px solid #C2A875;
+        }
     </style>
 </head>
 <body>
@@ -1453,7 +1486,7 @@
     <line x1="24" y1="24" x2="8"  y2="33" stroke="#1E6FD9" stroke-width="1.2" opacity="0.8"/>
     <line x1="24" y1="24" x2="8"  y2="14" stroke="#1E6FD9" stroke-width="1.2" opacity="0.8"/>
   </svg>
-  <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;letter-spacing:3px;color:#F0F2F5;">ECODOS</span>
+  <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;letter-spacing:3px;color:#1A2332;">ECODOS</span>
 </div>
                 </a>
             </div>
@@ -1482,7 +1515,7 @@
             <section class="hero">
                 <h1>איך עובד בית חכם ללא אינטרנט?</h1>
                 <p class="hero-subtitle">המדריך המלא למערכת אקודוס - ECODOS.</p>
-                <p style="color:#8A9BB0;font-size:1.05rem;max-width:680px;margin:0 auto 32px;line-height:1.8;">בית חכם שעובד גם כשהאינטרנט נופל, גם בשבת, וגם כשאתם רחוקים מהבית — בלי אפליקציה, בלי ענן, בלי תלות בשום חברה. הנה הסבר מלא איך זה עובד, מה היתרונות, ותשובות לשאלות הנפוצות.</p>
+                <p style="color:#5A6C7D;font-size:1.05rem;max-width:680px;margin:0 auto 32px;line-height:1.8;">בית חכם שעובד גם כשהאינטרנט נופל, גם בשבת, וגם כשאתם רחוקים מהבית — בלי אפליקציה, בלי ענן, בלי תלות בשום חברה. הנה הסבר מלא איך זה עובד, מה היתרונות, ותשובות לשאלות הנפוצות.</p>
                 
                 <div class="hero-images">
                     <img src="hub-front.png" alt="בקר ECODOS Hub — שליטה בבית חכם ללא אינטרנט" loading="lazy">
@@ -1569,46 +1602,46 @@
             </section>
 
             <section class="scroll-reveal" style="margin:80px auto;max-width:900px;padding:0 20px;">
-                <h2 style="text-align:center;font-family:'Rajdhani',sans-serif;font-size:2.5rem;color:#F0F2F5;margin-bottom:40px;letter-spacing:2px;">שאלות ותשובות</h2>
+                <h2 style="text-align:center;font-family:'Rajdhani',sans-serif;font-size:2.5rem;color:#1A2332;margin-bottom:40px;letter-spacing:2px;">שאלות ותשובות</h2>
                 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">האם אקודוס דורשת חיבור לאינטרנט?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">לא. מערכת אקודוס פועלת לחלוטין ללא חיבור לאינטרנט וללא רשת WiFi ביתית. השליטה מרחוק מתבצעת באמצעות שיחת טלפון רגילה אל בקר ה-Hub שמכיל כרטיס SIM סלולרי, והשליטה הפנימית בין הבקר לשקעים נעשית בתקשורת אלחוטית מקומית בתוך הבית.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">לא. מערכת אקודוס פועלת לחלוטין ללא חיבור לאינטרנט וללא רשת WiFi ביתית. השליטה מרחוק מתבצעת באמצעות שיחת טלפון רגילה אל בקר ה-Hub שמכיל כרטיס SIM סלולרי, והשליטה הפנימית בין הבקר לשקעים נעשית בתקשורת אלחוטית מקומית בתוך הבית.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">מה קורה אם רשת האינטרנט בבית נופלת?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">כלום. המערכת ממשיכה לעבוד באופן רגיל לחלוטין. אקודוס לא נשענת על אינטרנט בשום שלב — לא לצורך השליטה המקומית, לא לתזמונים, ולא לשליטה מרחוק. המערכת מתפקדת באופן עצמאי כמעט בכל מצב.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">כלום. המערכת ממשיכה לעבוד באופן רגיל לחלוטין. אקודוס לא נשענת על אינטרנט בשום שלב — לא לצורך השליטה המקומית, לא לתזמונים, ולא לשליטה מרחוק. המערכת מתפקדת באופן עצמאי כמעט בכל מצב.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">האם צריך להתקין אפליקציה בטלפון?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">לא. אקודוס תוכננה מתחילתה עבור ציבור שנושא טלפון כשר, ולכן השליטה מתבצעת בשיחת טלפון רגילה ללא צורך באפליקציה וללא תלות באינטרנט. מאחר שטלפון כשר אינו מאפשר התקנת אפליקציות, ומאחר שהמערכת אינה מתחברת לאינטרנט כלל, אפליקציה כזו אינה אפשרית מבחינה טכנית. גם משתמשי טלפון רגיל יכולים להפעיל את המערכת באותו אופן בדיוק — שיחת טלפון מספיקה.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">לא. אקודוס תוכננה מתחילתה עבור ציבור שנושא טלפון כשר, ולכן השליטה מתבצעת בשיחת טלפון רגילה ללא צורך באפליקציה וללא תלות באינטרנט. מאחר שטלפון כשר אינו מאפשר התקנת אפליקציות, ומאחר שהמערכת אינה מתחברת לאינטרנט כלל, אפליקציה כזו אינה אפשרית מבחינה טכנית. גם משתמשי טלפון רגיל יכולים להפעיל את המערכת באותו אופן בדיוק — שיחת טלפון מספיקה.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">כיצד שומרת המערכת על השבת?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">אקודוס מבצעת ניתוק חומרתי מלא לשבת באמצעות ממסר פיזי שמנתק לחלוטין את המתג והכפתור. זוהי לא הגנה תוכנתית — אלא ניתוק פיזי. גם אם לוחצים על הכפתור, שום זרם לא עובר. נורית "שבת קודש" על המארז מסמנת מצב זה.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">אקודוס מבצעת ניתוק חומרתי מלא לשבת באמצעות ממסר פיזי שמנתק לחלוטין את המתג והכפתור. זוהי לא הגנה תוכנתית — אלא ניתוק פיזי. גם אם לוחצים על הכפתור, שום זרם לא עובר. נורית "שבת קודש" על המארז מסמנת מצב זה.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">האם צריך חשמלאי להתקנה?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">ההתקנה דומה להחלפת שקע או מתג רגיל. עבור החלפה של שקעים ומתגים קיימים מומלץ להיעזר בחשמלאי מוסמך, אך אין צורך בשינויי תשתית, חציבה בקירות, או הוספת ארון חשמל. המערכת עובדת על תשתית החשמל הקיימת בבית.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">ההתקנה דומה להחלפת שקע או מתג רגיל. עבור החלפה של שקעים ומתגים קיימים מומלץ להיעזר בחשמלאי מוסמך, אך אין צורך בשינויי תשתית, חציבה בקירות, או הוספת ארון חשמל. המערכת עובדת על תשתית החשמל הקיימת בבית.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">כמה שקעים ומתגים אפשר להתקין?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">בקר ה-Hub יכול לתקשר עם כל המכשירים החכמים של אקודוס בכל הבית. המגוון כולל שקעים בקיר, תקעים ניידים, ומתגי תאורה. מוצרים נוספים בפיתוח מתמיד, וניתן גם לבקש פיתוחים מותאמים על ידי פנייה דרך טופס יצירת הקשר.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">בקר ה-Hub יכול לתקשר עם כל המכשירים החכמים של אקודוס בכל הבית. המגוון כולל שקעים בקיר, תקעים ניידים, ומתגי תאורה. מוצרים נוספים בפיתוח מתמיד, וניתן גם לבקש פיתוחים מותאמים על ידי פנייה דרך טופס יצירת הקשר.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">האם יש מדידת צריכת חשמל?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">כן. כל מוצר במערכת אקודוס כולל מד הספק חשמלי בזמן אמת — מתח, זרם, הספק וצריכה מצטברת. המידע מוצג בבקר ה-Hub.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">כן. כל מוצר במערכת אקודוס כולל מד הספק חשמלי בזמן אמת — מתח, זרם, הספק וצריכה מצטברת. המידע מוצג בבקר ה-Hub.</p>
                 </details>
 
-                <details style="background:#151820;border:1px solid #1C2130;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
+                <details style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:12px;padding:20px 24px;margin-bottom:14px;">
                     <summary style="cursor:pointer;font-size:1.15rem;color:#1E6FD9;font-weight:600;outline:none;">האם יש אחריות ותמיכה?</summary>
-                    <p style="margin-top:14px;color:#8A9BB0;line-height:1.8;">כן. אחריות מלאה לשנה מיום הרכישה על כל מוצר, כולל שירות ותמיכה. במקרה של תקלה ניתן ליצור קשר טלפוני, בוואטסאפ או באימייל. עדכוני קושחה מבוצעים מקומית ללא צורך באינטרנט.</p>
+                    <p style="margin-top:14px;color:#5A6C7D;line-height:1.8;">כן. אחריות מלאה לשנה מיום הרכישה על כל מוצר, כולל שירות ותמיכה. במקרה של תקלה ניתן ליצור קשר טלפוני, בוואטסאפ או באימייל. עדכוני קושחה מבוצעים מקומית ללא צורך באינטרנט.</p>
                 </details>
             </section>
 

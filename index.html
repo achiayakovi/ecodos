@@ -64,8 +64,8 @@
 
         body {
             font-family: 'Rubik', sans-serif;
-            background: #0D0F14;
-            color: #F0F2F5;
+            background: #E8EFFF;
+            color: #1A2332;
             overflow-x: hidden;
             min-height: 100vh;
             display: flex;
@@ -84,7 +84,7 @@
 
         /* Header */
         header {
-            background: #151820; border-bottom: 1px solid #1C2130;
+            background: #FFFFFF; border-bottom: 1px solid #95A3D9;
             padding: 25px 0;
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
             animation: slideDown 0.6s ease-out;
@@ -97,7 +97,7 @@
             top: 10px;
             right: 20px;
             font-size: 0.9rem;
-            color: #8A9BB0;
+            color: #5A6C7D;
             font-weight: 500;
         }
 
@@ -138,9 +138,9 @@
 
         /* Navigation Menu */
         nav {
-            background: #1C2130;
+            background: #CFD7F0;
             padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid #95A3D9;
             position: relative;
         }
 
@@ -150,7 +150,7 @@
             top: 50%;
             transform: translateY(-50%);
             text-decoration: none;
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 1.1rem;
             font-weight: 600;
             padding: 10px 20px;
@@ -162,8 +162,13 @@
             z-index: 100;
         }
 
+        .account-link {
+            border: 1.5px solid #C2A875;
+        }
+
         .account-link:hover {
-            background: rgba(30,111,217,0.1);
+            background: #C2A875;
+            color: #1A2332;
         }
 
         .nav-menu {
@@ -176,7 +181,7 @@
 
         .nav-menu a {
             text-decoration: none;
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 1.1rem;
             font-weight: 600;
             padding: 10px 20px;
@@ -185,12 +190,12 @@
         }
 
         .nav-menu a:hover {
-            background: rgba(30,111,217,0.1); color: #F0F2F5;
+            background: rgba(30,111,217,0.1); color: #1A2332;
             transform: translateY(-2px);
         }
 
         .nav-menu a.active {
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
         }
 
@@ -200,7 +205,7 @@
             background: none;
             border: none;
             font-size: 1.8rem;
-            color: #F0F2F5;
+            color: #1A2332;
             cursor: pointer;
             padding: 10px;
         }
@@ -226,7 +231,7 @@
                 left: 15px;
                 top: 130px;
                 transform: none;
-                background: #151820;
+                background: #FFFFFF;
                 border: 1px solid rgba(30,111,217,0.4);
                 box-shadow: 0 4px 15px rgba(0,0,0,0.4);
                 padding: 10px;
@@ -256,7 +261,7 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: #1C2130;
+                background: #CFD7F0;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
                 padding: 15px 0;
                 z-index: 1000;
@@ -270,7 +275,7 @@
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
-                color: #F0F2F5;
+                color: #1A2332;
                 font-size: 1.1rem;
                 font-weight: 600;
                 padding: 10px 20px;
@@ -322,9 +327,80 @@
 
         /* Hero Section */
         .hero {
-            padding: 80px 0;
+            padding: 70px 40px;
             text-align: center;
             animation: fadeIn 1s ease-out;
+            background: #FFFFFF;
+            border-top: 4px solid #C2A875;
+            border-radius: 30px;
+            margin: 20px 0 40px;
+            box-shadow: 0 10px 40px rgba(30,111,217,0.08);
+        }
+
+        .hero-cta {
+            display: inline-block;
+            background: #C2A875;
+            color: #1A2332;
+            padding: 15px 38px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+        }
+
+        .feature-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+            margin: 0 0 40px;
+        }
+
+        .feature-strip .feature {
+            background: #FFFFFF;
+            border: 1px solid #95A3D9;
+            border-top: 4px solid #C2A875;
+            border-radius: 20px;
+            padding: 30px 24px;
+            text-align: center;
+        }
+
+        .feature .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #CFD7F0;
+            color: #1E6FD9;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .feature h3 { font-size: 1.3rem; color: #1A2332; margin-bottom: 8px; }
+        .feature p { color: #5A6C7D; line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .feature-strip { grid-template-columns: 1fr; }
+        }
+
+        .hero-eyebrow {
+            display: inline-block;
+            background: #C2A875;
+            color: #1A2332;
+            padding: 7px 22px;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 22px;
         }
 
         @keyframes fadeIn {
@@ -341,9 +417,9 @@
         .hero h1 {
             font-size: 3.5rem;
             font-weight: 700;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.08);
             animation: bounceIn 1.2s ease-out;
         }
 
@@ -366,9 +442,9 @@
 
         .hero-subtitle {
             font-size: 1.5rem;
-            color: #C0C8D2;
+            color: #5A6C7D;
             font-weight: 500;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
             animation: fadeIn 1.5s ease-out;
         }
 
@@ -411,8 +487,8 @@
         }
 
         .benefits-card {
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 30px;
             padding: 60px;
             text-align: center;
@@ -421,7 +497,7 @@
 
         .benefits-card h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -450,9 +526,9 @@
         .benefits-list li {
             font-size: 1.3rem;
             padding: 20px;
-            background: #1C2130;
+            background: #CFD7F0;
             border-radius: 15px;
-            border-right: 4px solid #1E6FD9;
+            border-right: 4px solid #C2A875;
             transition: all 0.3s ease;
         }
 
@@ -465,7 +541,7 @@
             content: "✓";
             display: inline-block;
             margin-left: 10px;
-            color: #1E6FD9;
+            color: #C2A875;
             font-weight: bold;
             font-size: 1.4rem;
         }
@@ -473,8 +549,8 @@
         /* Remote Section */
         .remote-section {
             padding: 80px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             margin: 40px 0;
             border-radius: 30px;
         }
@@ -508,7 +584,7 @@
 
         .remote-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -528,8 +604,8 @@
         /* Cleaning Section */
         .cleaning-section {
             padding: 80px 0;
-            background: #1C2130;
-            border: 1px solid #2A3040;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.3);
@@ -564,7 +640,7 @@
 
         .cleaning-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -578,14 +654,14 @@
         .cleaning-text p {
             font-size: 1.2rem;
             line-height: 1.8;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         /* Modes Section */
         .modes-section {
             padding: 80px 0;
-            background: #1C2130;
-            border: 1px solid #2A3040;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.3);
@@ -616,7 +692,7 @@
 
         .modes-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -630,15 +706,15 @@
         .modes-text p {
             font-size: 1.2rem;
             line-height: 1.8;
-            color: #8A9BB0;
+            color: #5A6C7D;
             margin-bottom: 15px;
         }
 
         /* Accessories Section */
         .accessories-section {
             padding: 80px 0;
-            background: #1C2130;
-            border: 1px solid #2A3040;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.3);
@@ -661,7 +737,7 @@
 
         .accessories-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -697,8 +773,8 @@
         /* Package Section */
         .package {
             padding: 60px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             margin: 40px 0;
             border-radius: 30px;
         }
@@ -706,7 +782,7 @@
         .package h2 {
             text-align: center;
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -719,9 +795,9 @@
 
         .package-item {
             padding: 20px;
-            background: #1C2130;
+            background: #CFD7F0;
             border-radius: 15px;
-            border-right: 4px solid #1E6FD9;
+            border-right: 4px solid #C2A875;
             transition: all 0.3s ease;
             animation: fadeInRight 0.8s ease-out backwards;
             text-align: center;
@@ -765,7 +841,7 @@
             content: "✓";
             display: inline-block;
             margin-left: 10px;
-            color: #1E6FD9;
+            color: #C2A875;
             font-weight: bold;
             font-size: 1.2rem;
         }
@@ -774,10 +850,11 @@
         .price-section {
             text-align: center;
             padding: 60px 0;
-            background: linear-gradient(135deg, #1E6FD9 0%, #1455A8 100%);
-            color: white;
+            background: #FFFFFF;
+            color: #1A2332;
             border-radius: 30px;
             margin: 40px 0;
+            border-top: 4px solid #C2A875;
         }
 
         .price-section.active {
@@ -807,7 +884,7 @@
             margin: 40px 0;
         }
         .waitlist-card {
-            background: linear-gradient(135deg, #1E6FD9 0%, #1455A8 100%);
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             border-radius: 30px;
             padding: 60px 40px;
             text-align: center;
@@ -816,8 +893,8 @@
         }
         .waitlist-badge {
             display: inline-block;
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: #C2A875;
+            color: #1A2332;
             padding: 6px 18px;
             border-radius: 100px;
             font-size: 0.9rem;
@@ -933,8 +1010,8 @@
         /* Contact Section */
         .contact {
             padding: 60px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 30px;
             margin: 40px 0 120px 0;
         }
@@ -942,7 +1019,7 @@
         .contact h2 {
             text-align: center;
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -969,17 +1046,17 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 15px;
-            background: #1C2130;
-            border: 1px solid #242938;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             border-radius: 10px;
-            color: #F0F2F5;
+            color: #1A2332;
             font-family: 'Rubik', sans-serif;
             font-size: 1rem;
             transition: border-color 0.3s ease;
@@ -994,7 +1071,7 @@
         .btn-submit {
             width: 100%;
             padding: 18px;
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -1020,7 +1097,7 @@
             display: inline-block;
             margin-top: 10px;
             padding: 15px 30px;
-            background: #1C2130; border: 1px solid #242938;
+            background: #1E6FD9; border: none;
             color: white;
             text-decoration: none;
             border-radius: 10px;
@@ -1080,8 +1157,8 @@
 
         /* Footer */
         footer {
-            background: #151820; border-top: 1px solid #1C2130;
-            color: white;
+            background: #CFD7F0; border-top: 1px solid #95A3D9;
+            color: #1A2332;
             text-align: center;
             padding: 15px 0;
             margin-top: 60px;
@@ -1275,9 +1352,10 @@
             right: 30px;
             width: 50px;
             height: 50px;
-            background: #1C2130; border: 1px solid #242938;
-            color: #8A9BB0;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%); border: none;
+            color: #FFFFFF;
             border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(30,111,217,0.4);
             font-size: 24px;
             cursor: pointer;
             opacity: 0;
@@ -1293,7 +1371,7 @@
 
         .scroll-top-btn:hover {
             transform: translateY(-5px);
-            border-color: #1E6FD9; color: #1E6FD9;
+            background: #1455A8; color: #FFFFFF;
         }
 
         @media (max-width: 768px) {
@@ -1312,7 +1390,7 @@
             left: 30px;
             width: 50px;
             height: 50px;
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
             border: none;
             border-radius: 50%;
@@ -1352,6 +1430,44 @@
                 height: 45px;
             }
         }
+
+        /* === נגיעת זהב: פס קצר מתחת לכותרות מקטעים === */
+        .benefits-card h2, .remote-text h2, .cleaning-text h2,
+        .modes-text h2, .accessories-text h2, .package h2,
+        .contact h2, .price-section h2, .waitlist-card h2 {
+            display: inline-block;
+            position: relative;
+            padding-bottom: 14px;
+        }
+        .benefits-card h2::after, .remote-text h2::after, .cleaning-text h2::after,
+        .modes-text h2::after, .accessories-text h2::after, .package h2::after,
+        .contact h2::after, .price-section h2::after, .waitlist-card h2::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            border-radius: 2px;
+            background: #C2A875;
+        }
+
+        /* === פס זהב עליון לכל מקטע ראשי === */
+        .benefits-card, .remote-section, .cleaning-section,
+        .modes-section, .accessories-section, .contact {
+            border-top: 4px solid #C2A875;
+        }
+
+        /* === גרדיאנט תנועתי — רק על כרטיס "בקרוב" === */
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .waitlist-card {
+            background-size: 200% 200%;
+            animation: gradientShift 8s ease-in-out infinite;
+        }
     </style>
 </head>
 <body>
@@ -1379,7 +1495,7 @@
     <line x1="24" y1="24" x2="8"  y2="33" stroke="#1E6FD9" stroke-width="1.2" opacity="0.8"/>
     <line x1="24" y1="24" x2="8"  y2="14" stroke="#1E6FD9" stroke-width="1.2" opacity="0.8"/>
   </svg>
-  <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;letter-spacing:3px;color:#F0F2F5;">ECODOS</span>
+  <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;letter-spacing:3px;color:#1A2332;">ECODOS</span>
 </div>
                 </a>
             </div>
@@ -1406,13 +1522,34 @@
     <main>
         <div class="container">
             <section class="hero">
+<span class="hero-eyebrow">בית חכם · שומר שבת · ללא אינטרנט</span>
 <h1>אקודוס — בית חכם ללא אינטרנט</h1>
                 <p class="hero-subtitle">הבית שלך פועל לפי הכללים שלך.</p>
-                <p style="color:#8A9BB0;font-size:1.05rem;max-width:580px;margin:0 auto 32px;line-height:1.8;">שמירת שבת ברמת חומרה. שליטה מרחוק בחיוג פשוט.<br>ללא אינטרנט, ללא ענן, ללא תלות בשום חברה.</p>
-                
+                <p style="color:#5A6C7D;font-size:1.05rem;max-width:580px;margin:0 auto 32px;line-height:1.8;">שמירת שבת ברמת חומרה. שליטה מרחוק בחיוג פשוט.<br>ללא אינטרנט, ללא ענן, ללא תלות בשום חברה.</p>
+
+                <a href="#waitlist" class="hero-cta">הצטרפו לרשימת ההמתנה</a>
+
                 <div class="hero-images">
                     <img src="hub-front.png" alt="בקר ECODOS Hub" loading="lazy">
                     <img src="hub-side.png" alt="שקע חכם ECODOS" loading="lazy">
+                </div>
+            </section>
+
+            <section class="feature-strip scroll-reveal">
+                <div class="feature">
+                    <div class="feature-icon">⏻</div>
+                    <h3>ללא אינטרנט</h3>
+                    <p>פועל לגמרי מקומית — ללא ענן וללא תלות בשום חברה.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✡</div>
+                    <h3>שמירת שבת</h3>
+                    <p>שמירת שבת ברמת החומרה, לא תוכנה שאפשר לעקוף.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">☎</div>
+                    <h3>שליטה מרחוק</h3>
+                    <p>בחיוג טלפוני פשוט, מכל מקום, ללא אפליקציה.</p>
                 </div>
             </section>
 

@@ -62,8 +62,8 @@
 
         body {
             font-family: 'Rubik', sans-serif;
-            background: #0D0F14;
-            color: #F0F2F5;
+            background: #E8EFFF;
+            color: #1A2332;
             overflow-x: hidden;
             min-height: 100vh;
             display: flex;
@@ -82,7 +82,7 @@
 
         /* Header */
         header {
-            background: #151820; border-bottom: 1px solid #1C2130;
+            background: #FFFFFF; border-bottom: 1px solid #CFD7F0;
             padding: 25px 0;
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
             animation: slideDown 0.6s ease-out;
@@ -95,7 +95,7 @@
             top: 10px;
             right: 20px;
             font-size: 0.9rem;
-            color: #8A9BB0;
+            color: #5A6C7D;
             font-weight: 500;
         }
 
@@ -136,9 +136,9 @@
 
         /* Navigation Menu */
         nav {
-            background: #1C2130;
+            background: #CFD7F0;
             padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid #95A3D9;
             position: relative;
         }
 
@@ -148,7 +148,7 @@
             top: 50%;
             transform: translateY(-50%);
             text-decoration: none;
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 1.1rem;
             font-weight: 600;
             padding: 10px 20px;
@@ -160,8 +160,13 @@
             z-index: 100;
         }
 
+        .account-link {
+            border: 1.5px solid #C2A875;
+        }
+
         .account-link:hover {
-            background: rgba(30,111,217,0.1);
+            background: #C2A875;
+            color: #1A2332;
         }
 
         .nav-menu {
@@ -174,7 +179,7 @@
 
         .nav-menu a {
             text-decoration: none;
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 1.1rem;
             font-weight: 600;
             padding: 10px 20px;
@@ -183,12 +188,12 @@
         }
 
         .nav-menu a:hover {
-            background: rgba(30,111,217,0.1); color: #F0F2F5;
+            background: rgba(30,111,217,0.1); color: #1A2332;
             transform: translateY(-2px);
         }
 
         .nav-menu a.active {
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
         }
 
@@ -198,7 +203,7 @@
             background: none;
             border: none;
             font-size: 1.8rem;
-            color: #F0F2F5;
+            color: #1A2332;
             cursor: pointer;
             padding: 10px;
         }
@@ -224,7 +229,7 @@
                 left: 15px;
                 top: 130px;
                 transform: none;
-                background: #151820;
+                background: #FFFFFF;
                 border: 1px solid rgba(30,111,217,0.4);
                 box-shadow: 0 4px 15px rgba(0,0,0,0.4);
                 padding: 10px;
@@ -243,7 +248,7 @@
             }
 
             .account-link:hover {
-                background: #151820;
+                background: #FFFFFF;
                 transform: scale(1.1);
             }
             
@@ -254,7 +259,7 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: #1C2130;
+                background: #CFD7F0;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
                 padding: 15px 0;
                 z-index: 1000;
@@ -268,7 +273,7 @@
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
-                color: #F0F2F5;
+                color: #1A2332;
                 font-size: 1.1rem;
                 font-weight: 600;
                 padding: 10px 20px;
@@ -339,7 +344,7 @@
         .hero h1 {
             font-size: 3.5rem;
             font-weight: 700;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             animation: bounceIn 1.2s ease-out;
@@ -408,8 +413,8 @@
         }
 
         .benefits-card {
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 30px;
             padding: 60px;
             text-align: center;
@@ -418,7 +423,7 @@
 
         .benefits-card h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -447,7 +452,7 @@
         .benefits-list li {
             font-size: 1.3rem;
             padding: 20px;
-            background: #1C2130;
+            background: #CFD7F0;
             border-radius: 15px;
             border-right: 4px solid #1E6FD9;
             transition: all 0.3s ease;
@@ -462,7 +467,7 @@
             content: "✓";
             display: inline-block;
             margin-left: 10px;
-            color: #1E6FD9;
+            color: #C2A875;
             font-weight: bold;
             font-size: 1.4rem;
         }
@@ -470,8 +475,8 @@
         /* Remote Section */
         .remote-section {
             padding: 80px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             margin: 40px 0;
             border-radius: 30px;
         }
@@ -505,7 +510,7 @@
 
         .remote-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -525,7 +530,7 @@
         /* Cleaning Section */
         .cleaning-section {
             padding: 80px 0;
-            background: #151820;
+            background: #FFFFFF;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.1);
@@ -560,7 +565,7 @@
 
         .cleaning-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -580,7 +585,7 @@
         /* Modes Section */
         .modes-section {
             padding: 80px 0;
-            background: #151820;
+            background: #FFFFFF;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.1);
@@ -611,7 +616,7 @@
 
         .modes-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -632,7 +637,7 @@
         /* Accessories Section */
         .accessories-section {
             padding: 80px 0;
-            background: #151820;
+            background: #FFFFFF;
             margin: 40px 0;
             border-radius: 30px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.1);
@@ -655,7 +660,7 @@
 
         .accessories-text h2 {
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 20px;
         }
 
@@ -691,8 +696,8 @@
         /* Package Section */
         .package {
             padding: 60px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             margin: 40px 0;
             border-radius: 30px;
         }
@@ -700,7 +705,7 @@
         .package h2 {
             text-align: center;
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -713,7 +718,7 @@
 
         .package-item {
             padding: 20px;
-            background: #1C2130;
+            background: #CFD7F0;
             border-radius: 15px;
             border-right: 4px solid #1E6FD9;
             transition: all 0.3s ease;
@@ -759,7 +764,7 @@
             content: "✓";
             display: inline-block;
             margin-left: 10px;
-            color: #1E6FD9;
+            color: #C2A875;
             font-weight: bold;
             font-size: 1.2rem;
         }
@@ -797,8 +802,8 @@
         /* Contact Section */
         .contact {
             padding: 60px 0;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 30px;
             margin: 40px 0 120px 0;
         }
@@ -806,7 +811,7 @@
         .contact h2 {
             text-align: center;
             font-size: 2.5rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 40px;
         }
 
@@ -833,17 +838,17 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 15px;
-            background: #1C2130;
-            border: 1px solid #242938;
+            background: #CFD7F0;
+            border: 1px solid #95A3D9;
             border-radius: 10px;
-            color: #F0F2F5;
+            color: #1A2332;
             font-family: 'Rubik', sans-serif;
             font-size: 1rem;
             transition: border-color 0.3s ease;
@@ -884,7 +889,7 @@
             display: inline-block;
             margin-top: 10px;
             padding: 15px 30px;
-            background: #1C2130; border: 1px solid #242938;
+            background: #1E6FD9; border: none;
             color: white;
             text-decoration: none;
             border-radius: 10px;
@@ -944,8 +949,8 @@
 
         /* Footer */
         footer {
-            background: #151820; border-top: 1px solid #1C2130;
-            color: white;
+            background: #CFD7F0; border-top: 1px solid #95A3D9;
+            color: #1A2332;
             text-align: center;
             padding: 15px 0;
             margin-top: 60px;
@@ -1139,9 +1144,10 @@
             right: 30px;
             width: 50px;
             height: 50px;
-            background: #1C2130; border: 1px solid #242938;
-            color: #8A9BB0;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%); border: none;
+            color: #FFFFFF;
             border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(30,111,217,0.4);
             font-size: 24px;
             cursor: pointer;
             opacity: 0;
@@ -1157,7 +1163,7 @@
 
         .scroll-top-btn:hover {
             transform: translateY(-5px);
-            border-color: #1E6FD9; color: #1E6FD9;
+            background: #1455A8; color: #FFFFFF;
         }
 
         @media (max-width: 768px) {
@@ -1176,7 +1182,7 @@
             left: 30px;
             width: 50px;
             height: 50px;
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
             border: none;
             border-radius: 50%;
@@ -1229,8 +1235,8 @@
         }
 
         .about-content {
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 20px;
             padding: 60px;
             max-width: 900px;
@@ -1238,7 +1244,7 @@
         }
 
         .about-content h1 {
-            color: #F0F2F5;
+            color: #1A2332;
             font-size: 2.8rem;
             font-weight: 700;
             margin-bottom: 40px;
@@ -1246,7 +1252,7 @@
         }
 
         .about-content p {
-            color: #8A9BB0;
+            color: #5A6C7D;
             font-size: 1.2rem;
             line-height: 2;
             margin-bottom: 25px;
@@ -1255,7 +1261,7 @@
         .cta-section {
             margin-top: 60px;
             padding: 50px;
-            background: #1C2130;
+            background: #CFD7F0;
             border: 1px solid rgba(30,111,217,0.3);
             border-radius: 20px;
             text-align: center;
@@ -1263,14 +1269,14 @@
 
         .cta-section h2 {
             font-size: 1.8rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 15px;
             font-weight: 600;
         }
 
         .cta-section p {
             font-size: 1.1rem;
-            color: #8A9BB0;
+            color: #5A6C7D;
             margin-bottom: 30px;
         }
 
@@ -1297,7 +1303,7 @@
         }
         h2 {
             font-size: 2rem;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 30px;
             text-align: center;
         }
@@ -1310,7 +1316,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #F0F2F5;
+            color: #1A2332;
         }
 
         .form-group input {
@@ -1348,7 +1354,7 @@
         }
 
         .btn-secondary {
-            background: #151820;
+            background: #FFFFFF;
             color: #1E6FD9;
             border: 2px solid #1E6FD9;
         }
@@ -1361,7 +1367,7 @@
         .toggle-form {
             text-align: center;
             margin-top: 20px;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         .toggle-form a {
@@ -1387,7 +1393,7 @@
             border: none;
             font-size: 1.1rem;
             font-weight: 600;
-            color: #8A9BB0;
+            color: #5A6C7D;
             cursor: pointer;
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
@@ -1407,7 +1413,7 @@
         }
 
         .order-card, .warranty-card {
-            background: #0D0F14;
+            background: #E8EFFF;
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
@@ -1464,14 +1470,14 @@
 
         .warranty-field strong {
             display: block;
-            color: #F0F2F5;
+            color: #1A2332;
             margin-bottom: 5px;
         }
 
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #8A9BB0;
+            color: #5A6C7D;
         }
 
         .empty-state h3 {
@@ -1480,8 +1486,9 @@
         }
 
         footer {
-            background: #151820;
-            color: white;
+            background: #CFD7F0;
+            border-top: 1px solid #95A3D9;
+            color: #1A2332;
             text-align: center;
             padding: 15px 0;
             margin-top: 60px;
@@ -1503,7 +1510,7 @@
         .scroll-top-btn {
             bottom: 30px;
             right: 30px;
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
             opacity: 0;
             visibility: hidden;
@@ -1517,7 +1524,7 @@
         .cart-btn {
             bottom: 30px;
             left: 30px;
-            background: #1E6FD9;
+            background: linear-gradient(135deg, #1E6FD9 0%, #95A3D9 100%);
             color: white;
         }
 
@@ -1596,7 +1603,7 @@
         }
 
         .modal-content {
-            background: #151820;
+            background: #FFFFFF;
             padding: 30px;
             border-radius: 15px;
             max-width: 500px;
@@ -1611,7 +1618,7 @@
         }
 
         .modal-header h3 {
-            color: #F0F2F5;
+            color: #1A2332;
         }
 
         .modal-close {
@@ -1633,8 +1640,8 @@
         .auth-container {
             max-width: 500px;
             margin: 40px auto;
-            background: #151820;
-            border: 1px solid #1C2130;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
             border-radius: 20px;
             padding: 40px;
         }
@@ -1650,8 +1657,8 @@
             gap: 10px;
         }
         .toast {
-            background: #1C2130;
-            color: #F0F2F5;
+            background: #CFD7F0;
+            color: #1A2332;
             padding: 16px 20px;
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4);
@@ -1719,7 +1726,7 @@
     <line x1="24" y1="24" x2="8"  y2="33" stroke="#1E6FD9" stroke-width="1.2" opacity="0.8"/>
     <line x1="24" y1="24" x2="8"  y2="14" stroke="#1E6FD9" stroke-width="1.2" opacity="0.8"/>
   </svg>
-  <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;letter-spacing:3px;color:#F0F2F5;">ECODOS</span>
+  <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;letter-spacing:3px;color:#1A2332;">ECODOS</span>
 </div>
                 </a>
             </div>
