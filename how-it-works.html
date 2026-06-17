@@ -895,8 +895,8 @@
         }
         .waitlist-badge {
             display: inline-block;
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: #C2A875;
+            color: #1A2332;
             padding: 6px 18px;
             border-radius: 100px;
             font-size: 0.9rem;
@@ -1437,9 +1437,15 @@
         .benefits-card h2, .remote-text h2, .cleaning-text h2,
         .modes-text h2, .accessories-text h2, .package h2,
         .contact h2, .price-section h2, .waitlist-card h2 {
-            display: inline-block;
+            display: block;
+            width: fit-content;
             position: relative;
             padding-bottom: 14px;
+        }
+        .benefits-card h2, .package h2, .contact h2,
+        .price-section h2, .waitlist-card h2 {
+            margin-left: auto;
+            margin-right: auto;
         }
         .benefits-card h2::after, .remote-text h2::after, .cleaning-text h2::after,
         .modes-text h2::after, .accessories-text h2::after, .package h2::after,
