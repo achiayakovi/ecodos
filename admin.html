@@ -1630,7 +1630,7 @@
             const value = document.getElementById('newCategoryValue').value.trim();
             const label = document.getElementById('newCategoryLabel').value.trim();
             const msg = document.getElementById('categoryMessage');
-            const token = localStorage.getItem('ecodos_token');
+            const token = localStorage.getItem('token');
 
             if (!value || !label) {
                 msg.style.display = 'block'; msg.style.color = '#f77';
@@ -1657,7 +1657,7 @@
         }
 
         async function removeCategory(value) {
-            const token = localStorage.getItem('ecodos_token');
+            const token = localStorage.getItem('token');
             if (!confirm('למחוק קטגוריה זו?')) return;
             try {
                 await fetch(`${API_URL}/api/admin/categories/${value}`, {
@@ -1698,7 +1698,7 @@
             const value = document.getElementById('newProductTypeValue').value.trim();
             const label = document.getElementById('newProductTypeLabel').value.trim();
             const msg = document.getElementById('settingsMessage');
-            const token = localStorage.getItem('ecodos_token');
+            const token = localStorage.getItem('token');
 
             if (!value || !label) {
                 msg.style.display = 'block'; msg.style.color = '#f77';
@@ -1725,7 +1725,7 @@
         }
 
         async function removeProductType(value) {
-            const token = localStorage.getItem('ecodos_token');
+            const token = localStorage.getItem('token');
             if (!confirm('למחוק סוג מוצר זה?')) return;
             try {
                 await fetch(`${API_URL}/api/admin/product-types/${value}`, {
