@@ -540,23 +540,25 @@
 
         <!-- Admin Users Section -->
         <div id="admin_usersSection" class="section">
-            <h2>משתמשי ניהול</h2>
-            <div style="background:#FFFFFF;padding:25px;border-radius:12px;border:1px solid #CFD7F0;max-width:640px;margin-bottom:24px;">
-                <h3 style="margin-bottom:16px;color:#1A2332;">הוספת משתמש ניהול</h3>
-                <div class="form-group"><label>שם משתמש</label><input type="text" id="auUsername"></div>
-                <div class="form-group"><label>שם מלא</label><input type="text" id="auFullName"></div>
-                <div class="form-group"><label>סיסמה</label><input type="password" id="auPassword"></div>
-                <div class="form-group">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="auSuper" onchange="toggleAuSuper()"> מנהל-על (גישה לכל האזורים)</label>
+            <h2>משתמשי ניהול והרשאות</h2>
+            <p style="color:#5A6C7D; margin-bottom:16px;">משתמשי ניהול נפרדים מלקוחות — התחברות בשם משתמש. לחיצה על שורה מציגה הרשאות; "ערוך" לשינוי. מנהל-על (✶) רואה הכל.</p>
+            <button class="btn btn-primary" onclick="toggleAdminUserAdd()" style="margin-bottom:14px;">➕ משתמש ניהול חדש</button>
+            <form id="adminUserAddForm" onsubmit="createAdminUser(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
+                <div class="form-row">
+                    <div class="form-group"><label>שם משתמש *</label><input type="text" id="newAdminUsername" required></div>
+                    <div class="form-group"><label>שם מלא</label><input type="text" id="newAdminFullName"></div>
                 </div>
-                <div class="form-group" id="auAreasWrap">
-                    <label>אזורים מותרים</label>
-                    <div id="auAreas" style="display:flex;flex-wrap:wrap;gap:12px;"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>סיסמה *</label><input type="password" id="newAdminPassword" required minlength="4"></div>
+                    <div class="form-group"><label>&nbsp;</label><label style="font-weight:normal; padding-top:10px; display:inline-block;"><input type="checkbox" id="newAdminSuper"> מנהל-על</label></div>
                 </div>
-                <button class="btn btn-primary" onclick="createAdminUser()">הוסף משתמש</button>
-                <div id="auMessage" style="margin-top:14px;display:none;"></div>
-            </div>
-            <div id="adminUsersList"></div>
+                <div>
+                    <button type="submit" class="btn btn-primary">+ צור משתמש ניהול</button>
+                    <button type="button" class="btn" onclick="toggleAdminUserAdd()">ביטול</button>
+                </div>
+            </form>
+            <div id="adminUsersLoading" class="loading">טוען...</div>
+            <div id="adminUsersContent"></div>
         </div>
 
         <!-- Product Modal -->
@@ -831,96 +833,161 @@
 
         // ===== ניהול משתמשי ניהול =====
         const AREA_LABELS = { warranties:'אחריות', orders:'הזמנות', products:'מוצרים', stock:'מלאי', users:'משתמשים', receiving:'קליטה', communications:'תקשורת לקוחות', settings:'הגדרות', waitlist:'רשימת תפוצה', backups:'גיבויים' };
-        let _qmsAreasLoaded = false;
+        let qmsAreasList = [];
+        let adminUsersData = [];
+        let expandedAdminId = null, editingAdminId = null;
+
+        function toggleAdminUserAdd() {
+            const f = document.getElementById('adminUserAddForm');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
 
         async function loadAdminUsers() {
             const token = localStorage.getItem('adminToken');
             const H = { 'Authorization': `Bearer ${token}` };
-            const listEl = document.getElementById('adminUsersList');
+            const loading = document.getElementById('adminUsersLoading');
+            const content = document.getElementById('adminUsersContent');
+            loading.style.display = 'block'; content.innerHTML = '';
             try {
-                if (!_qmsAreasLoaded) {
-                    const ar = await fetch(`${API_URL}/api/admin/qms-areas`, { headers: H }).then(r => r.json());
-                    const areas = ar.areas || [];
-                    document.getElementById('auAreas').innerHTML = areas.map(a =>
-                        `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="au-area" value="${a}"> ${AREA_LABELS[a] || a}</label>`
-                    ).join('');
-                    _qmsAreasLoaded = true;
-                }
-                const list = await fetch(`${API_URL}/api/admin/admin-users`, { headers: H }).then(r => r.json());
-                if (!Array.isArray(list)) { listEl.innerHTML = '<p style="color:#e74c3c;">נדרשת הרשאת מנהל-על</p>'; return; }
-                listEl.innerHTML = list.map(u => {
-                    const areas = (u.qms_areas || []).includes('*') ? 'מנהל-על (כל האזורים)' :
-                        ((u.qms_areas || []).map(a => AREA_LABELS[a] || a).join(', ') || '—');
-                    return `<div style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:10px;padding:14px;margin-bottom:10px;">
-                        <div style="font-weight:700;color:#1A2332;">${escapeHtml(u.username)} ${u.is_active ? '' : '<span style="color:#e74c3c;">(מושבת)</span>'}</div>
-                        <div style="color:#5A6C7D;font-size:0.9rem;">${escapeHtml(u.full_name || '')}</div>
-                        <div style="color:#5A6C7D;font-size:0.85rem;margin-top:4px;">אזורים: ${escapeHtml(areas)}</div>
-                        <div style="margin-top:10px;display:flex;gap:8px;">
-                            <button class="btn btn-edit" style="padding:5px 12px;" onclick="resetAdminPassword(${u.id})">איפוס סיסמה</button>
-                            <button class="btn btn-delete" style="padding:5px 12px;" onclick="deleteAdminUser(${u.id})">מחיקה</button>
-                        </div>
-                    </div>`;
-                }).join('');
+                const [areasRes, usersRes] = await Promise.all([
+                    fetch(`${API_URL}/api/admin/qms-areas`, { headers: H }),
+                    fetch(`${API_URL}/api/admin/admin-users`, { headers: H })
+                ]);
+                loading.style.display = 'none';
+                if (!usersRes.ok) { content.innerHTML = '<p style="color:#5A6C7D;">רק מנהל-על יכול לנהל הרשאות.</p>'; return; }
+                qmsAreasList = (await areasRes.json()).areas || [];
+                adminUsersData = await usersRes.json();
+                renderAdminUsers();
             } catch (err) {
-                listEl.innerHTML = '<p style="color:#e74c3c;">שגיאה בטעינה</p>';
+                loading.style.display = 'none';
+                content.innerHTML = '<p style="color:#e74c3c;">שגיאה בטעינת משתמשים.</p>';
             }
         }
 
-        function toggleAuSuper() {
-            document.getElementById('auAreasWrap').style.display = document.getElementById('auSuper').checked ? 'none' : 'block';
+        function renderAdminUsers() {
+            const content = document.getElementById('adminUsersContent');
+            if (!Array.isArray(adminUsersData) || adminUsersData.length === 0) { content.innerHTML = '<p style="color:#5A6C7D;">אין משתמשי ניהול.</p>'; return; }
+            let html = '<div class="table-container"><table><tr><th></th><th>שם משתמש</th><th>שם מלא</th><th>הרשאה</th><th>פעיל</th></tr>';
+            adminUsersData.forEach(u => {
+                if (editingAdminId === u.id) { html += `<tr><td colspan="5" style="padding:0;">${adminUserEditForm(u)}</td></tr>`; return; }
+                const isSuper = (u.qms_areas || []).includes('*');
+                const open = expandedAdminId === u.id;
+                html += `<tr style="cursor:pointer;" onclick="toggleAdminExpand(${u.id})">
+                    <td>${open?'▲':'▼'}</td><td>${escapeHtml(u.username)} ${isSuper?'✶':''}</td><td>${escapeHtml(u.full_name||'')}</td>
+                    <td>${isSuper?'מנהל-על':(u.qms_areas||[]).length+' אזורים'}</td><td>${u.is_active?'פעיל':'מושבת'}</td></tr>`;
+                if (open) {
+                    const areasTxt = isSuper ? 'כל האזורים' : ((u.qms_areas||[]).map(a => AREA_LABELS[a]||a).join(', ') || '—');
+                    html += `<tr><td colspan="5" style="background:#f8f9fa; padding:10px 14px;">
+                        <div style="margin-bottom:8px;"><strong>אזורים מותרים:</strong> ${escapeHtml(areasTxt)}</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                          <button class="btn btn-primary" onclick="event.stopPropagation();startEditAdmin(${u.id})">ערוך</button>
+                          <button class="btn btn-edit" onclick="event.stopPropagation();resetAdminPassword(${u.id}, '${escapeJsAttr(u.username)}')">איפוס סיסמה</button>
+                          <button class="btn btn-delete" onclick="event.stopPropagation();deleteAdminUser(${u.id}, '${escapeJsAttr(u.username)}')">מחק</button></div></td></tr>`;
+                }
+            });
+            html += '</table></div>';
+            content.innerHTML = html;
         }
 
-        async function createAdminUser() {
+        function adminUserEditForm(u) {
+            const isSuper = (u.qms_areas || []).includes('*');
+            const checks = qmsAreasList.map(a => {
+                const checked = isSuper || (u.qms_areas || []).includes(a) ? 'checked' : '';
+                return `<label style="display:inline-block; margin:3px 10px; white-space:nowrap; font-weight:normal;">
+                    <input type="checkbox" value="${a}" ${checked} ${isSuper?'disabled':''}> ${escapeHtml(AREA_LABELS[a] || a)}</label>`;
+            }).join('');
+            return `<div style="padding:16px; background:#fafbfc;">
+                <div class="form-group"><label>שם מלא</label><input type="text" id="eau_fullname_${u.id}" value="${escapeHtml(u.full_name||'')}"></div>
+                <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="eau_super_${u.id}" ${isSuper?'checked':''} onchange="toggleSuperInline(${u.id})"> מנהל-על (גישה לכל האזורים)</label>
+                <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="eau_active_${u.id}" ${u.is_active?'checked':''}> פעיל (יכול להתחבר)</label>
+                <div style="margin-bottom:10px;"><strong style="display:block; margin-bottom:6px;">אזורים מותרים:</strong><div id="eau_areas_${u.id}">${checks}</div></div>
+                <div><button class="btn btn-success" onclick="saveAdminPermissions(${u.id})">שמור</button>
+                <button class="btn" onclick="cancelEditAdmin()">בטל</button></div>
+            </div>`;
+        }
+
+        function toggleAdminExpand(id) { if (editingAdminId === id) return; editingAdminId = null; expandedAdminId = (expandedAdminId === id) ? null : id; renderAdminUsers(); }
+        function startEditAdmin(id) { expandedAdminId = id; editingAdminId = id; renderAdminUsers(); }
+        function cancelEditAdmin() { editingAdminId = null; renderAdminUsers(); }
+
+        function toggleSuperInline(uid) {
+            const isSuper = document.getElementById('eau_super_' + uid).checked;
+            document.querySelectorAll(`#eau_areas_${uid} input[type=checkbox]`).forEach(cb => {
+                cb.disabled = isSuper;
+                if (isSuper) cb.checked = true;
+            });
+        }
+
+        function collectAreas(uid) {
+            if (document.getElementById('eau_super_' + uid).checked) return ['*'];
+            return Array.from(document.querySelectorAll(`#eau_areas_${uid} input[type=checkbox]:checked`)).map(cb => cb.value);
+        }
+
+        async function saveAdminPermissions(uid) {
             const token = localStorage.getItem('adminToken');
-            const username = document.getElementById('auUsername').value.trim();
-            const full_name = document.getElementById('auFullName').value.trim();
-            const password = document.getElementById('auPassword').value;
-            const msg = document.getElementById('auMessage');
-            const isSuper = document.getElementById('auSuper').checked;
-            const areas = isSuper ? ['*'] : Array.from(document.querySelectorAll('.au-area:checked')).map(c => c.value);
-            if (!username || !password) { msg.style.display = 'block'; msg.style.color = '#e74c3c'; msg.textContent = 'שם משתמש וסיסמה הם חובה'; return; }
             try {
-                const res = await fetch(`${API_URL}/api/admin/admin-users`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ username, password, full_name, qms_areas: areas })
+                const res = await fetch(`${API_URL}/api/admin/admin-users/${uid}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        full_name: document.getElementById('eau_fullname_' + uid).value.trim(),
+                        qms_areas: collectAreas(uid),
+                        is_active: document.getElementById('eau_active_' + uid).checked
+                    })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error);
-                document.getElementById('auUsername').value = '';
-                document.getElementById('auFullName').value = '';
-                document.getElementById('auPassword').value = '';
-                document.getElementById('auSuper').checked = false; toggleAuSuper();
-                document.querySelectorAll('.au-area:checked').forEach(c => c.checked = false);
-                msg.style.display = 'block'; msg.style.color = '#27ae60'; msg.textContent = 'נוסף בהצלחה';
-                setTimeout(() => msg.style.display = 'none', 2000);
+                if (!res.ok) { alert(data.error || 'שגיאה בשמירה'); return; }
+                editingAdminId = null;
                 loadAdminUsers();
-            } catch (err) {
-                msg.style.display = 'block'; msg.style.color = '#e74c3c'; msg.textContent = err.message || 'שגיאה';
-            }
+            } catch (err) { alert('שגיאה בשמירה'); }
         }
 
-        async function resetAdminPassword(id) {
-            const np = prompt('סיסמה חדשה (לפחות 4 תווים):');
-            if (!np) return;
+        async function createAdminUser(e) {
+            e.preventDefault();
             const token = localStorage.getItem('adminToken');
+            const isSuper = document.getElementById('newAdminSuper').checked;
             try {
-                const res = await fetch(`${API_URL}/api/admin/admin-users/${id}/password`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ new_password: np })
+                const res = await fetch(`${API_URL}/api/admin/admin-users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        username: document.getElementById('newAdminUsername').value.trim(),
+                        full_name: document.getElementById('newAdminFullName').value.trim(),
+                        password: document.getElementById('newAdminPassword').value,
+                        qms_areas: isSuper ? ['*'] : []
+                    })
                 });
-                const d = await res.json(); if (!res.ok) throw new Error(d.error);
-                alert('הסיסמה אופסה');
-            } catch (err) { alert(err.message || 'שגיאה'); }
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'שגיאה ביצירה'); return; }
+                e.target.reset();
+                document.getElementById('adminUserAddForm').style.display = 'none';
+                loadAdminUsers();
+            } catch (err) { alert('שגיאה ביצירה'); }
         }
 
-        async function deleteAdminUser(id) {
-            if (!confirm('למחוק משתמש ניהול זה?')) return;
+        async function resetAdminPassword(uid, username) {
+            const pw = prompt(`סיסמה חדשה ל-${username} (לפחות 4 תווים):`);
+            if (!pw) return;
+            if (pw.length < 4) { alert('סיסמה קצרה מדי'); return; }
             const token = localStorage.getItem('adminToken');
             try {
-                const res = await fetch(`${API_URL}/api/admin/admin-users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                const d = await res.json(); if (!res.ok) throw new Error(d.error);
+                const res = await fetch(`${API_URL}/api/admin/admin-users/${uid}/password`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ new_password: pw })
+                });
+                const d = await res.json(); if (!res.ok) { alert(d.error || 'שגיאה'); return; }
+                alert('הסיסמה אופסה');
+            } catch (err) { alert('שגיאה'); }
+        }
+
+        async function deleteAdminUser(uid, username) {
+            if (!confirm(`למחוק את משתמש הניהול "${username}"?`)) return;
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/admin-users/${uid}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const d = await res.json(); if (!res.ok) { alert(d.error || 'שגיאה'); return; }
                 loadAdminUsers();
-            } catch (err) { alert(err.message || 'שגיאה'); }
+            } catch (err) { alert('שגיאה'); }
         }
 
         async function loadDashboard() {
