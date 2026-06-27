@@ -292,7 +292,17 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="loginScreen" style="display:none;min-height:100vh;align-items:center;justify-content:center;">
+        <form onsubmit="adminLogin(event)" style="background:#fff;padding:40px;border-radius:14px;border:1px solid #CFD7F0;box-shadow:0 10px 40px rgba(36,64,176,0.12);width:340px;max-width:90vw;">
+            <h2 style="color:#2440B0;margin-bottom:8px;">פאנל ניהול ECODOS</h2>
+            <p style="color:#5A6C7D;margin-bottom:20px;font-size:0.9rem;">התחברות מנהל</p>
+            <div class="form-group"><label>שם משתמש</label><input type="text" id="loginUsername" required></div>
+            <div class="form-group"><label>סיסמה</label><input type="password" id="loginPassword" required></div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:10px;">כניסה</button>
+            <div id="loginError" style="color:#e74c3c;margin-top:12px;display:none;"></div>
+        </form>
+    </div>
+    <div class="container" id="adminApp" style="display:none;">
         <header>
             <div>
                 <h1>🎛️ פאנל ניהול - ECODOS</h1>
@@ -325,13 +335,14 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('warranties')">אחריות</button>
-            <button class="tab" onclick="switchTab('orders')">הזמנות</button>
-            <button class="tab" onclick="switchTab('products')">מוצרים</button>
-            <button class="tab" onclick="switchTab('stock')">מלאי</button>
-            <button class="tab" onclick="switchTab('users')">משתמשים</button>
-            <button class="tab" onclick="switchTab('settings')">הגדרות</button>
-            <button class="tab" onclick="switchTab('waitlist')">רשימת תפוצה</button>
+            <button class="tab active" data-area="warranties" onclick="switchTab('warranties')">אחריות</button>
+            <button class="tab" data-area="orders" onclick="switchTab('orders')">הזמנות</button>
+            <button class="tab" data-area="products" onclick="switchTab('products')">מוצרים</button>
+            <button class="tab" data-area="stock" onclick="switchTab('stock')">מלאי</button>
+            <button class="tab" data-area="users" onclick="switchTab('users')">משתמשים</button>
+            <button class="tab" data-area="settings" onclick="switchTab('settings')">הגדרות</button>
+            <button class="tab" data-area="waitlist" onclick="switchTab('waitlist')">רשימת תפוצה</button>
+            <button class="tab" data-area="admin_users" onclick="switchTab('admin_users')">משתמשי ניהול</button>
         </div>
 
         <!-- Warranties Section -->
@@ -527,6 +538,27 @@
             <div id="waitlistContent"></div>
         </div>
 
+        <!-- Admin Users Section -->
+        <div id="admin_usersSection" class="section">
+            <h2>משתמשי ניהול</h2>
+            <div style="background:#FFFFFF;padding:25px;border-radius:12px;border:1px solid #CFD7F0;max-width:640px;margin-bottom:24px;">
+                <h3 style="margin-bottom:16px;color:#1A2332;">הוספת משתמש ניהול</h3>
+                <div class="form-group"><label>שם משתמש</label><input type="text" id="auUsername"></div>
+                <div class="form-group"><label>שם מלא</label><input type="text" id="auFullName"></div>
+                <div class="form-group"><label>סיסמה</label><input type="password" id="auPassword"></div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="auSuper" onchange="toggleAuSuper()"> מנהל-על (גישה לכל האזורים)</label>
+                </div>
+                <div class="form-group" id="auAreasWrap">
+                    <label>אזורים מותרים</label>
+                    <div id="auAreas" style="display:flex;flex-wrap:wrap;gap:12px;"></div>
+                </div>
+                <button class="btn btn-primary" onclick="createAdminUser()">הוסף משתמש</button>
+                <div id="auMessage" style="margin-top:14px;display:none;"></div>
+            </div>
+            <div id="adminUsersList"></div>
+        </div>
+
         <!-- Product Modal -->
     <div class="modal" id="productModal">
         <div class="modal-content">
@@ -701,44 +733,88 @@
         let allUsers = [];
         let currentProduct = null;
 
-        // Auth Check
-        async function checkAuth() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/account.html';
-                return;
-            }
+        // ===== Auth (התחברות ניהול נפרדת — adminToken) =====
+        let currentAdmin = { qms_areas: [] };
 
+        function adminHasArea(area) {
+            const a = currentAdmin.qms_areas || [];
+            return a.includes('*') || a.includes(area);
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminApp').style.display = 'none';
+        }
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminApp').style.display = 'block';
+        }
+
+        async function checkAuth() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) { showLogin(); return; }
             try {
-                const res = await fetch(`${API_URL}/api/user/profile`, {
+                const res = await fetch(`${API_URL}/api/admin-auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const user = await res.json();
-                
-                if (!user.is_admin) {
-                    alert('אין לך הרשאות אדמין');
-                    window.location.href = '/account.html';
-                    return;
-                }
-
-                document.getElementById('adminName').textContent = user.full_name;
+                if (!res.ok) { localStorage.removeItem('adminToken'); showLogin(); return; }
+                currentAdmin = await res.json();
+                document.getElementById('adminName').textContent = currentAdmin.full_name || currentAdmin.username;
+                showApp();
+                applyAreaPermissions();
                 loadDashboard();
-                
             } catch (err) {
-                window.location.href = '/account.html';
+                showLogin();
             }
+        }
+
+        async function adminLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errEl = document.getElementById('loginError');
+            try {
+                const res = await fetch(`${API_URL}/api/admin-auth/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'שגיאת התחברות');
+                localStorage.setItem('adminToken', data.token);
+                errEl.style.display = 'none';
+                checkAuth();
+            } catch (err) {
+                errEl.style.display = 'block';
+                errEl.textContent = err.message;
+            }
+        }
+
+        // הסתרת טאבים שאין להם הרשאה + בחירת טאב ראשון מותר
+        function applyAreaPermissions() {
+            const tabs = document.querySelectorAll('.tab[data-area]');
+            let firstAllowed = null;
+            tabs.forEach(t => {
+                const allowed = adminHasArea(t.dataset.area);
+                t.style.display = allowed ? '' : 'none';
+                if (allowed && !firstAllowed) firstAllowed = t.dataset.area;
+            });
+            if (firstAllowed) switchTab(firstAllowed);
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/account.html';
+            localStorage.removeItem('adminToken');
+            currentAdmin = { qms_areas: [] };
+            showLogin();
         }
 
         function switchTab(tab) {
+            if (!adminHasArea(tab)) return;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(tab + 'Section').classList.add('active');
+            const btn = document.querySelector(`.tab[data-area="${tab}"]`);
+            if (btn) btn.classList.add('active');
+            const section = document.getElementById(tab + 'Section');
+            if (section) section.classList.add('active');
 
             if (tab === 'warranties') loadWarranties();
             else if (tab === 'orders') loadOrders();
@@ -746,10 +822,109 @@
             else if (tab === 'stock') loadStock();
             else if (tab === 'users') loadUsers();
             else if (tab === 'waitlist') loadWaitlist();
+            else if (tab === 'admin_users') loadAdminUsers();
+            else if (tab === 'settings') {
+                if (typeof renderCategoriesList === 'function') renderCategoriesList();
+                if (typeof renderProductTypesList === 'function') renderProductTypesList();
+            }
+        }
+
+        // ===== ניהול משתמשי ניהול =====
+        const AREA_LABELS = { warranties:'אחריות', orders:'הזמנות', products:'מוצרים', stock:'מלאי', users:'משתמשים', receiving:'קליטה', communications:'תקשורת לקוחות', settings:'הגדרות', waitlist:'רשימת תפוצה', backups:'גיבויים' };
+        let _qmsAreasLoaded = false;
+
+        async function loadAdminUsers() {
+            const token = localStorage.getItem('adminToken');
+            const H = { 'Authorization': `Bearer ${token}` };
+            const listEl = document.getElementById('adminUsersList');
+            try {
+                if (!_qmsAreasLoaded) {
+                    const ar = await fetch(`${API_URL}/api/admin/qms-areas`, { headers: H }).then(r => r.json());
+                    const areas = ar.areas || [];
+                    document.getElementById('auAreas').innerHTML = areas.map(a =>
+                        `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="au-area" value="${a}"> ${AREA_LABELS[a] || a}</label>`
+                    ).join('');
+                    _qmsAreasLoaded = true;
+                }
+                const list = await fetch(`${API_URL}/api/admin/admin-users`, { headers: H }).then(r => r.json());
+                if (!Array.isArray(list)) { listEl.innerHTML = '<p style="color:#e74c3c;">נדרשת הרשאת מנהל-על</p>'; return; }
+                listEl.innerHTML = list.map(u => {
+                    const areas = (u.qms_areas || []).includes('*') ? 'מנהל-על (כל האזורים)' :
+                        ((u.qms_areas || []).map(a => AREA_LABELS[a] || a).join(', ') || '—');
+                    return `<div style="background:#FFFFFF;border:1px solid #CFD7F0;border-radius:10px;padding:14px;margin-bottom:10px;">
+                        <div style="font-weight:700;color:#1A2332;">${escapeHtml(u.username)} ${u.is_active ? '' : '<span style="color:#e74c3c;">(מושבת)</span>'}</div>
+                        <div style="color:#5A6C7D;font-size:0.9rem;">${escapeHtml(u.full_name || '')}</div>
+                        <div style="color:#5A6C7D;font-size:0.85rem;margin-top:4px;">אזורים: ${escapeHtml(areas)}</div>
+                        <div style="margin-top:10px;display:flex;gap:8px;">
+                            <button class="btn btn-edit" style="padding:5px 12px;" onclick="resetAdminPassword(${u.id})">איפוס סיסמה</button>
+                            <button class="btn btn-delete" style="padding:5px 12px;" onclick="deleteAdminUser(${u.id})">מחיקה</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                listEl.innerHTML = '<p style="color:#e74c3c;">שגיאה בטעינה</p>';
+            }
+        }
+
+        function toggleAuSuper() {
+            document.getElementById('auAreasWrap').style.display = document.getElementById('auSuper').checked ? 'none' : 'block';
+        }
+
+        async function createAdminUser() {
+            const token = localStorage.getItem('adminToken');
+            const username = document.getElementById('auUsername').value.trim();
+            const full_name = document.getElementById('auFullName').value.trim();
+            const password = document.getElementById('auPassword').value;
+            const msg = document.getElementById('auMessage');
+            const isSuper = document.getElementById('auSuper').checked;
+            const areas = isSuper ? ['*'] : Array.from(document.querySelectorAll('.au-area:checked')).map(c => c.value);
+            if (!username || !password) { msg.style.display = 'block'; msg.style.color = '#e74c3c'; msg.textContent = 'שם משתמש וסיסמה הם חובה'; return; }
+            try {
+                const res = await fetch(`${API_URL}/api/admin/admin-users`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ username, password, full_name, qms_areas: areas })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                document.getElementById('auUsername').value = '';
+                document.getElementById('auFullName').value = '';
+                document.getElementById('auPassword').value = '';
+                document.getElementById('auSuper').checked = false; toggleAuSuper();
+                document.querySelectorAll('.au-area:checked').forEach(c => c.checked = false);
+                msg.style.display = 'block'; msg.style.color = '#27ae60'; msg.textContent = 'נוסף בהצלחה';
+                setTimeout(() => msg.style.display = 'none', 2000);
+                loadAdminUsers();
+            } catch (err) {
+                msg.style.display = 'block'; msg.style.color = '#e74c3c'; msg.textContent = err.message || 'שגיאה';
+            }
+        }
+
+        async function resetAdminPassword(id) {
+            const np = prompt('סיסמה חדשה (לפחות 4 תווים):');
+            if (!np) return;
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/admin-users/${id}/password`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ new_password: np })
+                });
+                const d = await res.json(); if (!res.ok) throw new Error(d.error);
+                alert('הסיסמה אופסה');
+            } catch (err) { alert(err.message || 'שגיאה'); }
+        }
+
+        async function deleteAdminUser(id) {
+            if (!confirm('למחוק משתמש ניהול זה?')) return;
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/admin-users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const d = await res.json(); if (!res.ok) throw new Error(d.error);
+                loadAdminUsers();
+            } catch (err) { alert(err.message || 'שגיאה'); }
         }
 
         async function loadDashboard() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             
             try {
                 const [warranties, orders, users] = await Promise.all([
@@ -782,7 +957,7 @@
 
         // Warranties
         async function loadWarranties() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('warrantiesLoading');
             const content = document.getElementById('warrantiesContent');
             
@@ -867,7 +1042,7 @@
         }
 
         async function updateStatus(id, status) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 await fetch(`${API_URL}/api/admin/warranty/${id}`, {
                     method: 'PUT',
@@ -892,7 +1067,7 @@
         }
 
         async function updateMachineNumber(id, machine_number) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 await fetch(`${API_URL}/api/admin/warranty/${id}/machine-number`, {
                     method: 'PUT',
@@ -911,7 +1086,7 @@
 
         async function deleteWarranty(id) {
             if (!confirm('למחוק אחריות זו?')) return;
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 await fetch(`${API_URL}/api/admin/warranty/${id}`, {
                     method: 'DELETE',
@@ -976,7 +1151,7 @@
 
         async function assignUser(e) {
             e.preventDefault();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const warrantyId = document.getElementById('assignWarrantyId').value;
             const userId = document.getElementById('assignUserId').value || null;
             
@@ -1011,7 +1186,7 @@
 
         async function saveDates(e) {
             e.preventDefault();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const warrantyId = document.getElementById('datesWarrantyId').value;
             const purchaseDate = document.getElementById('editPurchaseDate').value;
             const expiryDate = document.getElementById('editExpiryDate').value;
@@ -1035,7 +1210,7 @@
 
         // Products
         async function loadProducts() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('productsLoading');
             const content = document.getElementById('productsContent');
             
@@ -1157,7 +1332,7 @@
 
         async function saveProduct(e) {
             e.preventDefault();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const id = document.getElementById('productId').value;
             
             const productData = {
@@ -1204,7 +1379,7 @@
         }
 
         async function editProduct(id) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 const res = await fetch(`${API_URL}/api/admin/products/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1218,7 +1393,7 @@
 
         async function deleteProduct(id) {
             if (!confirm('למחוק מוצר זה?')) return;
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 await fetch(`${API_URL}/api/admin/products/${id}`, {
                     method: 'DELETE',
@@ -1233,7 +1408,7 @@
 
         // Orders
         async function loadOrders() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('ordersLoading');
             const content = document.getElementById('ordersContent');
             
@@ -1290,7 +1465,7 @@
         }
 
         async function updateOrderStatus(id, status) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 await fetch(`${API_URL}/api/admin/orders/${id}`, {
                     method: 'PUT',
@@ -1307,7 +1482,7 @@
         }
 
         async function viewOrder(id) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 const res = await fetch(`${API_URL}/api/admin/order/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1349,7 +1524,7 @@
 
         // Users
         async function loadUsers() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('usersLoading');
             const content = document.getElementById('usersContent');
             
@@ -1407,7 +1582,7 @@
 
         async function resetPassword(e) {
             e.preventDefault();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const email = document.getElementById('resetUserEmail').value;
             const newPassword = document.getElementById('newPassword').value;
             
@@ -1436,7 +1611,7 @@
         }
 
         async function loadProductsForStockSelect() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 const res = await fetch(`${API_URL}/api/admin/all-products`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1452,7 +1627,7 @@
         }
 
         async function loadLowStock() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('lowStockLoading');
             const content = document.getElementById('lowStockContent');
             
@@ -1504,7 +1679,7 @@
         }
 
         async function loadStockLogs() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('stockLogsLoading');
             const content = document.getElementById('stockLogsContent');
             
@@ -1555,7 +1730,7 @@
 
         async function updateStock(e) {
             e.preventDefault();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             
             const product_id = parseInt(document.getElementById('stockProductId').value);
             const change_amount = parseInt(document.getElementById('stockChangeAmount').value);
@@ -1628,7 +1803,7 @@
             const value = document.getElementById('newCategoryValue').value.trim();
             const label = document.getElementById('newCategoryLabel').value.trim();
             const msg = document.getElementById('categoryMessage');
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
 
             if (!value || !label) {
                 msg.style.display = 'block'; msg.style.color = '#f77';
@@ -1655,7 +1830,7 @@
         }
 
         async function removeCategory(value) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             if (!confirm('למחוק קטגוריה זו?')) return;
             try {
                 await fetch(`${API_URL}/api/admin/categories/${value}`, {
@@ -1696,7 +1871,7 @@
             const value = document.getElementById('newProductTypeValue').value.trim();
             const label = document.getElementById('newProductTypeLabel').value.trim();
             const msg = document.getElementById('settingsMessage');
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
 
             if (!value || !label) {
                 msg.style.display = 'block'; msg.style.color = '#f77';
@@ -1723,7 +1898,7 @@
         }
 
         async function removeProductType(value) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             if (!confirm('למחוק סוג מוצר זה?')) return;
             try {
                 await fetch(`${API_URL}/api/admin/product-types/${value}`, {
@@ -1751,7 +1926,7 @@
         let allWaitlist = [];
 
         async function loadWaitlist() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('waitlistLoading');
             const content = document.getElementById('waitlistContent');
             loading.style.display = 'block';
@@ -1905,7 +2080,7 @@
         }
 
         async function updateWaitlistStatus(id, status) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 const res = await fetch(`${API_URL}/api/admin/waitlist/${id}`, {
                     method: 'PUT',
@@ -1924,7 +2099,7 @@
 
         async function deleteWaitlistEntry(id) {
             if (!confirm('למחוק את הרישום? פעולה זו לא הפיכה.')) return;
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             try {
                 const res = await fetch(`${API_URL}/api/admin/waitlist/${id}`, {
                     method: 'DELETE',
