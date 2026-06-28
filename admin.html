@@ -698,6 +698,10 @@
             <h2>קליטה ומאגר סריאלים</h2>
             <button class="btn btn-primary" onclick="toggleReceivingAdd()" style="margin-bottom:14px;">➕ קליטה חדשה</button>
             <form id="receivingAddForm" onsubmit="addReceiving(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
+                <div class="form-group"><label>סוג קליטה</label>
+                    <select id="rcType" onchange="onReceivingTypeChange()"><option value="ספק">ספק</option><option value="החזרה">החזרה מהזמנה</option></select>
+                </div>
+                <div id="rcSupplierBlock">
                 <div class="form-row">
                     <div class="form-group"><label>תאריך</label><input type="date" id="rcDate"></div>
                     <div class="form-group"><label>ספק</label><input type="text" id="rcSupplier" placeholder="TPH"></div>
@@ -726,6 +730,15 @@
                     <div class="form-group"><label>או רשימה (מופרדת בפסיק/שורה — גובר על הטווח)</label><textarea id="rcSerList" rows="2"></textarea></div>
                 </div>
                 <div><button type="submit" class="btn btn-primary">צור קליטה</button> <button type="button" class="btn" onclick="toggleReceivingAdd()">ביטול</button></div>
+                </div>
+                <div id="rcReturnBlock" style="display:none;">
+                    <div class="form-group" style="position:relative;"><label>חיפוש הזמנה (מספר / שם / טלפון)</label>
+                        <input type="text" id="rcReturnSearch" oninput="searchReturnOrders()" placeholder="הקלד לחיפוש..." autocomplete="off">
+                        <div id="rcReturnResults" style="display:none; position:absolute; z-index:10; background:#fff; border:1px solid #ccc; border-radius:6px; width:100%; max-height:220px; overflow:auto;"></div>
+                    </div>
+                    <div id="rcReturnDetail"></div>
+                    <div style="margin-top:8px;"><button type="button" class="btn" onclick="toggleReceivingAdd()">סגור</button></div>
+                </div>
             </form>
             <div id="receivingLoading" class="loading">טוען...</div>
             <div id="receivingContent"></div>
@@ -1394,6 +1407,58 @@
             }catch(e){ showMessage('שגיאה בשמירה','error'); }
         }
         function onRcProductChange(){ const v=document.getElementById('rcProduct').value; document.getElementById('rcNewProduct').style.display = v==='__new__'?'block':'none'; }
+        function onReceivingTypeChange(){
+            const isRet=((document.getElementById('rcType')||{}).value||'ספק')==='החזרה';
+            const sup=document.getElementById('rcSupplierBlock'), ret=document.getElementById('rcReturnBlock');
+            if(sup) sup.style.display=isRet?'none':'';
+            if(ret) ret.style.display=isRet?'':'none';
+        }
+        let rcReturnTimer=null, rcReturnOrderId=null;
+        function searchReturnOrders(){
+            clearTimeout(rcReturnTimer);
+            rcReturnTimer=setTimeout(async()=>{
+                const t=localStorage.getItem('adminToken');
+                const q=document.getElementById('rcReturnSearch').value.trim();
+                const box=document.getElementById('rcReturnResults');
+                if(q.length<1){ box.style.display='none'; return; }
+                try{
+                    const rows=await fetch(`${API_URL}/api/admin/orders/search?q=${encodeURIComponent(q)}`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json());
+                    if(!Array.isArray(rows)||!rows.length){ box.innerHTML='<div style="padding:6px;color:#888;">אין תוצאות</div>'; box.style.display='block'; return; }
+                    box.innerHTML=rows.map(o=>`<div style="padding:6px;cursor:pointer;border-bottom:1px solid #eee;" onclick="loadReturnOrderDetail(${o.id})">📦 הזמנה #${o.id} · ${escapeHtml(o.full_name||'')}</div>`).join('');
+                    box.style.display='block';
+                }catch(e){ box.style.display='none'; }
+            },250);
+        }
+        async function loadReturnOrderDetail(id){
+            document.getElementById('rcReturnResults').style.display='none';
+            document.getElementById('rcReturnSearch').value='';
+            rcReturnOrderId=id;
+            const t=localStorage.getItem('adminToken'); const det=document.getElementById('rcReturnDetail');
+            det.innerHTML='<p class="loading">טוען...</p>';
+            try{
+                const o=await fetch(`${API_URL}/api/admin/order/${id}`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json());
+                const warr=(o.warranties||[]);
+                let h=`<div style="background:#fff;padding:10px;border-radius:6px;border:1px solid #CFD7F0;"><strong>הזמנה #${id}</strong> — ${escapeHtml(o.full_name||o.guest_name||'')}`;
+                if(warr.length){
+                    h+='<div style="margin-top:8px;"><strong>בחר פריטי אחריות להחזרה:</strong>'+warr.map(w=>`<div style="padding:4px 0;"><label><input type="checkbox" class="retWarr" value="${w.id}"> ${escapeHtml(w.product_name||'מוצר')} ${w.serial_number?('· '+escapeHtml(w.serial_number)):'(ללא סריאלי)'}</label></div>`).join('')+'</div>';
+                } else { h+='<div style="margin-top:8px;color:#888;">אין אחריות בהזמנה זו.</div>'; }
+                h+=`<div style="margin-top:10px;"><button type="button" class="btn btn-success" onclick="createReturn()">צור קליטת החזרה</button></div></div>`;
+                det.innerHTML=h;
+            }catch(e){ det.innerHTML='<p style="color:#e74c3c;">שגיאה בטעינת ההזמנה</p>'; }
+        }
+        async function createReturn(){
+            const t=localStorage.getItem('adminToken');
+            const warranty_ids=Array.from(document.querySelectorAll('.retWarr:checked')).map(c=>parseInt(c.value,10));
+            if(!warranty_ids.length){ showMessage('בחר לפחות פריט אחד','error'); return; }
+            try{
+                const res=await fetch(`${API_URL}/api/admin/receiving/return-from-order`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({ order_id: rcReturnOrderId, warranty_ids })});
+                const d=await res.json(); if(!res.ok){ showMessage(d.error||'שגיאה','error'); return; }
+                showMessage(`נקלטה החזרה (${d.units} יח')`,'success');
+                document.getElementById('receivingAddForm').style.display='none';
+                document.getElementById('rcReturnDetail').innerHTML='';
+                loadReceiving();
+            }catch(e){ showMessage('שגיאה בקליטת החזרה','error'); }
+        }
         async function addReceiving(e){
             e.preventDefault(); const token=localStorage.getItem('adminToken');
             const prodVal=document.getElementById('rcProduct').value;
