@@ -1191,20 +1191,25 @@
         }
 
         async function toggleSatStats(){
-            const el=document.getElementById('satStatsPanel');
-            if(el.style.display!=='none'){el.style.display='none';return;}
-            el.style.display='block'; el.innerHTML='<p class="loading">טוען...</p>';
-            const t=localStorage.getItem('adminToken');
+            const panel=document.getElementById('satStatsPanel');
+            if(panel.style.display!=='none' && panel.innerHTML.trim()){ panel.style.display='none'; return; }
+            panel.style.display='block'; panel.innerHTML='<p class="loading">טוען...</p>';
+            const token=localStorage.getItem('adminToken');
             try{
-                const res=await fetch(`${API_URL}/api/admin/satisfaction-stats`,{headers:{'Authorization':`Bearer ${t}`}});
-                const d=await res.json(); if(!res.ok)throw new Error(d.error);
-                if(!d.n){el.innerHTML='<p style="color:#5A6C7D;">אין עדיין משובים</p>';return;}
-                const card=(label,n,avg)=>`<div style="background:#fff;border:1px solid #CFD7F0;border-radius:8px;padding:10px 14px;"><b>${escapeHtml(label)}</b><br><span style="color:#2440B0;font-weight:700;">★ ${avg||'-'}</span> <span style="color:#5A6C7D;font-size:0.85rem;">(${n})</span></div>`;
-                let h=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;"><div style="background:#fff;border:1px solid #C2A875;border-radius:8px;padding:12px 16px;"><div style="font-size:1.6rem;font-weight:700;color:#2440B0;">★ ${d.avg||'-'}</div><div style="color:#5A6C7D;font-size:0.85rem;">${d.n} דירוגים</div></div></div>`;
-                if(d.by_topic&&d.by_topic.length){h+='<h4 style="margin:8px 0;">לפי נושא</h4><div style="display:flex;gap:10px;flex-wrap:wrap;">'+d.by_topic.map(x=>card(x.topic,x.n,x.avg)).join('')+'</div>';}
-                if(d.by_stage&&d.by_stage.length){h+='<h4 style="margin:10px 0 8px;">לפי שלב</h4><div style="display:flex;gap:10px;flex-wrap:wrap;">'+d.by_stage.map(x=>card(x.topic,x.n,x.avg)).join('')+'</div>';}
-                el.innerHTML=h;
-            }catch(e){el.innerHTML=`<p style="color:#e74c3c;">${escapeHtml(e.message||'שגיאה')}</p>`;}
+                const s=await fetch(`${API_URL}/api/admin/satisfaction-stats`,{headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.json());
+                if(!s.n){ panel.innerHTML='<div style="background:#eef; padding:12px; border-radius:8px; margin-bottom:12px;">אין משובים עם דירוג עדיין.</div>'; return; }
+                const bar=(n,tot)=>{ const pct=tot?Math.round(n/tot*100):0; return `<div style="display:flex; align-items:center; gap:8px; margin:2px 0;"><span style="width:40px;">${n}</span><div style="background:#667eea; height:14px; width:${pct}%; border-radius:4px; min-width:2px;"></div></div>`; };
+                const dist=(o)=>`<div style="margin-top:6px;"><div>★5 ${bar(o.s5,o.n)}</div><div>★4 ${bar(o.s4,o.n)}</div><div>★3 ${bar(o.s3,o.n)}</div><div>★2 ${bar(o.s2,o.n)}</div><div>★1 ${bar(o.s1,o.n)}</div></div>`;
+                const card=(tp)=>`<div style="background:#fff; border:1px solid #dde; padding:10px 12px; border-radius:8px; flex:1; min-width:180px;"><strong>${escapeHtml(tp.topic)}</strong> — ממוצע <span style="color:#5a4ed1; font-weight:bold;">${tp.avg}</span>/5 · ${tp.n}${dist(tp)}</div>`;
+                const topics=(s.by_topic||[]).map(card).join('');
+                const stages=(s.by_stage||[]).map(card).join('');
+                panel.innerHTML=`<div style="background:#eef; padding:14px; border-radius:8px; margin-bottom:14px;">
+                    <strong>סיכום שביעות רצון (כל המשובים)</strong> — ממוצע <span style="font-size:1.3rem; color:#5a4ed1; font-weight:bold;">${s.avg}</span>/5 · ${s.n} דירוגים
+                    ${dist(s)}
+                    ${stages?`<div style="margin-top:12px;"><strong>לפי שלב סקר:</strong><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">${stages}</div></div>`:''}
+                    ${topics?`<div style="margin-top:12px;"><strong>לפי נושא:</strong><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">${topics}</div></div>`:''}
+                </div>`;
+            }catch(e){ panel.innerHTML=`<p style="color:#e74c3c;">${escapeHtml(e.message||'שגיאה')}</p>`; }
         }
 
         // ===== קליטה + מאגר סריאלים =====
