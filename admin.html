@@ -2040,8 +2040,13 @@
             }
         }
         function orderStatusSelect(o){
-            const opts=[['pending','ממתין'],['completed','הושלם'],['cancelled','בוטל']];
-            return `<select class="status-select" onclick="event.stopPropagation();" onchange="updateOrderStatus(${o.id}, this.value)">${opts.map(([v,t])=>`<option value="${v}" ${o.status===v?'selected':''}>${t}</option>`).join('')}</select>`;
+            return `<select class="status-select" onclick="event.stopPropagation();" onchange="updateOrderStatus(${o.id}, this.value)">
+                <option value="pending" ${o.status==='pending'?'selected':''}>ממתין</option>
+                <option value="preparing" ${o.status==='preparing'?'selected':''}>הכנת הזמנה</option>
+                <option value="dispatched" ${o.status==='dispatched'?'selected':''}>${o.delivery_method==='איסוף'?'מוכן לאיסוף':'נשלח'}</option>
+                <option value="completed" ${o.status==='completed'?'selected':''}>הושלם</option>
+                <option value="cancelled" ${o.status==='cancelled'?'selected':''}>בוטל</option>
+            </select>`;
         }
         // מצב סקר לשלב: done (הגיב) / pending (נשלח, טרם הגיב) / notsent
         function surveyStageState(o, stage){
