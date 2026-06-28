@@ -245,6 +245,18 @@
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
+        /* עיצוב אחיד ומעוגל גם לשדות חופשיים (מסננים/חיפוש) */
+        .section input:not(.status-select),
+        .section select:not(.status-select),
+        .section textarea {
+            padding: 12px;
+            border: 1px solid #2A3348;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            background: #CFD7F0;
+            color: #1A2332;
+        }
         
         /* Messages */
         .message {
