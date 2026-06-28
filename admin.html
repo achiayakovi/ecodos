@@ -1297,76 +1297,55 @@
         }
 
         // Products
+        let productsData = [], expandedProductId = null;
         async function loadProducts() {
             const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('productsLoading');
             const content = document.getElementById('productsContent');
-            
             loading.style.display = 'block';
             content.innerHTML = '';
-
             try {
                 const res = await fetch(`${API_URL}/api/admin/all-products`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const products = await res.json();
+                productsData = await res.json();
                 loading.style.display = 'none';
-                
-                if (products.length === 0) {
-                    content.innerHTML = '<p class="empty-state">אין מוצרים</p>';
-                    return;
-                }
-
-                content.innerHTML = `
-                    <div class="table-container">
-                        <table>
-                            <tr>
-                                <th>שם</th>
-                                <th>SKU</th>
-                                <th>קטגוריה</th>
-                                <th>מחיר</th>
-                                <th>מלאי</th>
-                                <th>סטטוס</th>
-                                <th>תג</th>
-                                <th>פעולות</th>
-                            </tr>
-                            ${products.map(p => `
-                                <tr>
-                                    <td>${escapeHtml(p.name)}</td>
-                                    <td>${p.sku || '-'}</td>
-                                    <td>${p.category || '-'}</td>
-                                    <td>
-                                        ${p.sale_price ? 
-                                            `<span style="text-decoration: line-through; color: gray;">₪${p.price}</span><br>
-                                             <span style="color: red; font-weight: bold;">₪${p.sale_price}</span>` :
-                                            `₪${p.price}`}
-                                    </td>
-                                    <td style="font-weight: bold; color: ${
-                                        p.stock_quantity === 0 ? 'red' : 
-                                        p.stock_quantity <= 10 ? 'orange' : 
-                                        'green'
-                                    };">
-                                        ${p.stock_quantity}
-                                    </td>
-                                    <td>
-                                        ${p.stock_quantity === 0 ? 
-                                            '<span style="color: red;">🔴 אזל</span>' : 
-                                            '<span style="color: green;">🟢 במלאי</span>'}
-                                    </td>
-                                    <td>${p.badge ? `<span style="background: #2440B0; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">${p.badge}</span>` : '-'}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-edit" onclick="editProduct(${p.id})">ערוך</button>
-                                        <button class="btn btn-sm btn-delete" onclick="deleteProduct(${p.id})">מחק</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </table>
-                    </div>
-                `;
+                renderProducts();
             } catch (err) {
                 loading.innerHTML = 'שגיאה';
             }
         }
+        function renderProducts() {
+            const content = document.getElementById('productsContent');
+            if (!Array.isArray(productsData) || !productsData.length) { content.innerHTML = '<p class="empty-state">אין מוצרים</p>'; return; }
+            let h = '<div class="table-container"><table><tr><th></th><th>שם</th><th>מחיר</th><th>מלאי</th><th>סטטוס</th></tr>';
+            productsData.forEach(p => {
+                const open = expandedProductId === p.id;
+                const stockColor = p.stock_quantity === 0 ? 'red' : p.stock_quantity <= 10 ? 'orange' : 'green';
+                const priceHtml = p.sale_price ? `<span style="text-decoration:line-through;color:gray;">₪${p.price}</span> <span style="color:red;font-weight:bold;">₪${p.sale_price}</span>` : `₪${p.price}`;
+                h += `<tr style="cursor:pointer;" onclick="toggleProductExpand(${p.id})">
+                    <td>${open ? '▲' : '▼'}</td>
+                    <td>${escapeHtml(p.name)}</td>
+                    <td>${priceHtml}</td>
+                    <td style="font-weight:bold;color:${stockColor};">${p.stock_quantity}</td>
+                    <td>${p.stock_quantity === 0 ? '<span style="color:red;">🔴 אזל</span>' : '<span style="color:green;">🟢 במלאי</span>'}</td></tr>`;
+                if (open) {
+                    h += `<tr><td colspan="5" style="background:#f8f9fa; padding:10px 14px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
+                            <div style="padding:3px 0;"><span style="color:#888;">SKU: </span>${escapeHtml(p.sku || '-')}</div>
+                            <div style="padding:3px 0;"><span style="color:#888;">קטגוריה: </span>${escapeHtml(p.category || '-')}</div>
+                            <div style="padding:3px 0;"><span style="color:#888;">תג: </span>${p.badge ? escapeHtml(p.badge) : '-'}</div>
+                            <div style="padding:3px 0;"><span style="color:#888;">אחריות: </span>${p.has_warranty ? 'כן' : 'לא'}</div>
+                        </div>
+                        ${p.short_description ? `<div style="margin-top:6px;"><span style="color:#888;">תיאור קצר: </span>${escapeHtml(p.short_description)}</div>` : ''}
+                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();editProduct(${p.id})">ערוך</button>
+                        <button class="btn btn-delete" onclick="event.stopPropagation();deleteProduct(${p.id})">מחק</button></div></td></tr>`;
+                }
+            });
+            h += '</table></div>';
+            content.innerHTML = h;
+        }
+        function toggleProductExpand(id){ expandedProductId = expandedProductId === id ? null : id; renderProducts(); }
 
         async function loadCategoryOptions() {
             const select = document.getElementById('productCategory');
@@ -1611,51 +1590,49 @@
         }
 
         // Users
+        let usersData = [], expandedUserId = null;
         async function loadUsers() {
             const token = localStorage.getItem('adminToken');
             const loading = document.getElementById('usersLoading');
-            const content = document.getElementById('usersContent');
-            
             loading.style.display = 'block';
-            content.innerHTML = '';
-
+            document.getElementById('usersContent').innerHTML = '';
             try {
                 const res = await fetch(`${API_URL}/api/admin/users`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const users = await res.json();
+                usersData = await res.json();
                 loading.style.display = 'none';
-
-                content.innerHTML = `
-                    <div class="table-container">
-                        <table>
-                            <tr>
-                                <th>שם</th>
-                                <th>אימייל</th>
-                                <th>טלפון</th>
-                                <th>אדמין</th>
-                                <th>תאריך הצטרפות</th>
-                                <th>פעולות</th>
-                            </tr>
-                            ${users.map(u => `
-                                <tr>
-                                    <td>${escapeHtml(u.full_name)}</td>
-                                    <td>${escapeHtml(u.email)}</td>
-                                    <td>${escapeHtml(u.phone || '-')}</td>
-                                    <td>${u.is_admin ? '✓' : '✗'}</td>
-                                    <td>${new Date(u.created_at).toLocaleDateString('he-IL')}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-edit" onclick="openResetPasswordModal('${escapeJsAttr(u.email)}', '${escapeJsAttr(u.full_name)}')">איפוס סיסמה</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </table>
-                    </div>
-                `;
+                renderUsersList();
             } catch (err) {
                 loading.innerHTML = 'שגיאה';
             }
         }
+        function renderUsersList() {
+            const content = document.getElementById('usersContent');
+            if (!Array.isArray(usersData) || !usersData.length) { content.innerHTML = '<p class="empty-state">אין לקוחות</p>'; return; }
+            let h = '<div class="table-container"><table><tr><th></th><th>שם</th><th>אימייל</th><th>טלפון</th><th>אדמין</th></tr>';
+            usersData.forEach(u => {
+                const open = expandedUserId === u.id;
+                h += `<tr style="cursor:pointer;" onclick="toggleUserExpand(${u.id})">
+                    <td>${open ? '▲' : '▼'}</td>
+                    <td>${escapeHtml(u.full_name || '')}</td>
+                    <td>${escapeHtml(u.email || '')}</td>
+                    <td>${escapeHtml(u.phone || '-')}</td>
+                    <td>${u.is_admin ? '✓' : '✗'}</td></tr>`;
+                if (open) {
+                    h += `<tr><td colspan="5" style="background:#f8f9fa; padding:10px 14px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
+                            <div style="padding:3px 0;"><span style="color:#888;">כתובת: </span>${escapeHtml(u.address || '-')}</div>
+                            <div style="padding:3px 0;"><span style="color:#888;">תאריך הצטרפות: </span>${new Date(u.created_at).toLocaleDateString('he-IL')}</div>
+                            <div style="padding:3px 0;"><span style="color:#888;">אדמין: </span>${u.is_admin ? 'כן' : 'לא'}</div>
+                        </div>
+                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();openResetPasswordModal('${escapeJsAttr(u.email)}', '${escapeJsAttr(u.full_name)}')">איפוס סיסמה</button></div></td></tr>`;
+                }
+            });
+            h += '</table></div>';
+            content.innerHTML = h;
+        }
+        function toggleUserExpand(id){ expandedUserId = expandedUserId === id ? null : id; renderUsersList(); }
 
         function openResetPasswordModal(email, name) {
             document.getElementById('resetUserEmail').value = email;
