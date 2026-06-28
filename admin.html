@@ -357,6 +357,7 @@
             <button class="tab" data-area="settings" onclick="switchTab('settings')">הגדרות</button>
             <button class="tab" data-area="waitlist" onclick="switchTab('waitlist')">רשימת תפוצה</button>
             <button class="tab" data-area="admin_users" onclick="switchTab('admin_users')">משתמשי ניהול</button>
+            <button class="tab" data-area="backups" onclick="switchTab('backups')">גיבויים</button>
         </div>
 
         <!-- Warranties Section -->
@@ -589,6 +590,8 @@
         <div id="communicationsSection" class="section">
             <h2>תקשורת לקוחות</h2>
             <button class="btn btn-primary" onclick="toggleCommAdd()" style="margin-bottom:14px;">➕ רשומה חדשה</button>
+            <button class="btn" onclick="toggleSatStats()" style="margin-bottom:14px;">📊 שביעות רצון</button>
+            <div id="satStatsPanel" style="display:none;margin-bottom:16px;"></div>
             <form id="commAddForm" onsubmit="addCommunication(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
                 <div class="form-row">
                     <div class="form-group"><label>תאריך</label><input type="date" id="commDate"></div>
@@ -653,6 +656,15 @@
                 <div><button type="submit" class="btn btn-primary">הוסף</button> <button type="button" class="btn" onclick="toggleManualSerial()">ביטול</button></div>
             </form>
             <div id="serialsContent"></div>
+        </div>
+
+        <!-- Backups Section -->
+        <div id="backupsSection" class="section">
+            <h2>גיבויים</h2>
+            <p style="color:#5A6C7D;margin-bottom:14px;">גיבוי יומי אוטומטי (02:00) נשמר בשרת off-site. כאן אפשר לגבות עכשיו, לשחזר או למחוק.</p>
+            <button class="btn btn-primary" onclick="backupNow()" style="margin-bottom:14px;">📥 גבה עכשיו</button>
+            <div id="backupsLoading" class="loading">טוען...</div>
+            <div id="backupsContent"></div>
         </div>
 
         <!-- Product Modal -->
@@ -921,6 +933,7 @@
             else if (tab === 'admin_users') loadAdminUsers();
             else if (tab === 'communications') loadCommunications();
             else if (tab === 'receiving') loadReceiving();
+            else if (tab === 'backups') loadBackups();
             else if (tab === 'settings') {
                 if (typeof renderCategoriesList === 'function') renderCategoriesList();
                 if (typeof renderProductTypesList === 'function') renderProductTypesList();
@@ -1043,6 +1056,23 @@
                 if (!res.ok) { const dd=await res.json().catch(()=>({})); showMessage(dd.error||'שגיאה','error'); return; }
                 loadCommunications();
             } catch (err) { showMessage('שגיאה','error'); }
+        }
+
+        async function toggleSatStats(){
+            const el=document.getElementById('satStatsPanel');
+            if(el.style.display!=='none'){el.style.display='none';return;}
+            el.style.display='block'; el.innerHTML='<p class="loading">טוען...</p>';
+            const t=localStorage.getItem('adminToken');
+            try{
+                const res=await fetch(`${API_URL}/api/admin/satisfaction-stats`,{headers:{'Authorization':`Bearer ${t}`}});
+                const d=await res.json(); if(!res.ok)throw new Error(d.error);
+                if(!d.n){el.innerHTML='<p style="color:#5A6C7D;">אין עדיין משובים</p>';return;}
+                const card=(label,n,avg)=>`<div style="background:#fff;border:1px solid #CFD7F0;border-radius:8px;padding:10px 14px;"><b>${escapeHtml(label)}</b><br><span style="color:#2440B0;font-weight:700;">★ ${avg||'-'}</span> <span style="color:#5A6C7D;font-size:0.85rem;">(${n})</span></div>`;
+                let h=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;"><div style="background:#fff;border:1px solid #C2A875;border-radius:8px;padding:12px 16px;"><div style="font-size:1.6rem;font-weight:700;color:#2440B0;">★ ${d.avg||'-'}</div><div style="color:#5A6C7D;font-size:0.85rem;">${d.n} דירוגים</div></div></div>`;
+                if(d.by_topic&&d.by_topic.length){h+='<h4 style="margin:8px 0;">לפי נושא</h4><div style="display:flex;gap:10px;flex-wrap:wrap;">'+d.by_topic.map(x=>card(x.topic,x.n,x.avg)).join('')+'</div>';}
+                if(d.by_stage&&d.by_stage.length){h+='<h4 style="margin:10px 0 8px;">לפי שלב</h4><div style="display:flex;gap:10px;flex-wrap:wrap;">'+d.by_stage.map(x=>card(x.topic,x.n,x.avg)).join('')+'</div>';}
+                el.innerHTML=h;
+            }catch(e){el.innerHTML=`<p style="color:#e74c3c;">${escapeHtml(e.message||'שגיאה')}</p>`;}
         }
 
         // ===== קליטה + מאגר סריאלים =====
@@ -1176,6 +1206,48 @@
                 loadSerials();
             } catch(err){ showMessage('שגיאה','error'); }
         }
+        // ===== גיבויים =====
+        async function loadBackups(){
+            const token=localStorage.getItem('adminToken');
+            const loading=document.getElementById('backupsLoading'), content=document.getElementById('backupsContent');
+            loading.style.display='block'; content.innerHTML='';
+            try {
+                const res=await fetch(`${API_URL}/api/admin/backups`, {headers:{'Authorization':`Bearer ${token}`}});
+                const data=await res.json(); loading.style.display='none';
+                if(!res.ok){content.innerHTML=`<p style="color:#e74c3c;">${escapeHtml(data.error||'שגיאה')}</p>`;return;}
+                const list=data.backups||[];
+                if(!list.length){content.innerHTML='<p class="empty-state">אין גיבויים עדיין</p>';return;}
+                let h='<div class="table-container"><table><tr><th>קובץ</th><th>גודל</th><th>תאריך</th><th>פעולות</th></tr>';
+                list.forEach(b=>{
+                    h+=`<tr><td>${escapeHtml(b.name)}</td><td>${(b.size/1024).toFixed(1)} KB</td><td>${new Date(b.mtime).toLocaleString('he-IL')}</td>
+                        <td style="display:flex;gap:6px;"><button class="btn btn-edit" style="padding:4px 10px;" onclick="restoreBackup('${escapeJsAttr(b.name)}')">שחזר</button>
+                        <button class="btn btn-delete" style="padding:4px 10px;" onclick="deleteBackup('${escapeJsAttr(b.name)}')">מחק</button></td></tr>`;
+                });
+                h+='</table></div>'; content.innerHTML=h;
+            } catch(e){ loading.innerHTML='שגיאה'; }
+        }
+        async function backupNow(){
+            const token=localStorage.getItem('adminToken');
+            showMessage('מגבה...','success');
+            try {
+                const res=await fetch(`${API_URL}/api/admin/backup-now`, {method:'POST',headers:{'Authorization':`Bearer ${token}`}});
+                const d=await res.json(); if(!res.ok)throw new Error(d.error);
+                showMessage(`גובה: ${d.filename}`,'success'); loadBackups();
+            } catch(e){ showMessage(e.message||'שגיאה בגיבוי','error'); }
+        }
+        async function deleteBackup(name){
+            if(!confirm('למחוק גיבוי זה?'))return;
+            const token=localStorage.getItem('adminToken');
+            try { const res=await fetch(`${API_URL}/api/admin/backups/${encodeURIComponent(name)}`, {method:'DELETE',headers:{'Authorization':`Bearer ${token}`}}); const d=await res.json(); if(!res.ok)throw new Error(d.error); loadBackups(); } catch(e){ showMessage(e.message||'שגיאה','error'); }
+        }
+        async function restoreBackup(name){
+            if(!confirm('⚠️ שחזור ימחק את כל הנתונים הנוכחיים ויחליף אותם בגיבוי. בטוח?'))return;
+            if(!confirm('זו פעולה הרסנית. לאשר סופית?'))return;
+            const token=localStorage.getItem('adminToken');
+            showMessage('משחזר...','success');
+            try { const res=await fetch(`${API_URL}/api/admin/restore/${encodeURIComponent(name)}`, {method:'POST',headers:{'Authorization':`Bearer ${token}`}}); const d=await res.json(); if(!res.ok)throw new Error(d.error); showMessage('שוחזר בהצלחה','success'); } catch(e){ showMessage(e.message||'שגיאת שחזור','error'); }
+        }
+
         async function assignWarrantySerial(id){
             const el=document.getElementById('wa_assignserial_'+id); const sn=el?el.value.trim():'';
             if(!sn){showMessage('הזן מספר סריאלי','error');return;}
@@ -1866,17 +1938,47 @@
                 if(open){
                     h+=`<tr><td colspan="6" style="background:#f8f9fa; padding:10px 14px;">
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
-                            <div><span style="color:#888;">אימייל: </span>${escapeHtml(o.email||'-')}</div>
+                            <div><span style="color:#888;">אימייל: </span>${escapeHtml(o.email||o.guest_email||'-')}</div>
+                            <div><span style="color:#888;">טלפון: </span>${escapeHtml(o.guest_phone||'-')}</div>
                             <div><span style="color:#888;">כתובת: </span>${escapeHtml(o.shipping_address||'-')}</div>
                             <div><span style="color:#888;">תשלום: </span>${escapeHtml(o.payment_status||'-')}</div>
-                            <div><span style="color:#888;">סכום: </span>₪${o.total_amount}</div>
+                            <div><span style="color:#888;">סוג: </span>${o.user_id?'לקוח רשום':'אורח'}</div>
                         </div>
-                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();viewOrder(${o.id})">צפה במוצרים</button></div></td></tr>`;
+                        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="event.stopPropagation();viewOrder(${o.id})">צפה במוצרים</button>
+                            <button class="btn btn-edit" onclick="event.stopPropagation();orderSurveyCall(${o.id},'purchase')">📞 סקר רכישה</button>
+                            <button class="btn btn-edit" onclick="event.stopPropagation();orderSurveyCall(${o.id},'day30')">📞 סקר 30 יום</button>
+                            <button class="btn" onclick="event.stopPropagation();toggleOrderAssign(${o.id})">שיוך לקוח</button>
+                        </div>
+                        <div id="order_assign_${o.id}" style="display:none;margin-top:10px;background:#fff;padding:12px;border-radius:6px;">
+                            <div class="form-row">
+                                <div class="form-group"><label>שיוך למשתמש רשום</label><select id="oa_user_${o.id}"><option value="">— בחר —</option>${(allUsers||[]).map(u=>`<option value="${u.id}" ${o.user_id===u.id?'selected':''}>${escapeHtml(u.full_name)} (${escapeHtml(u.email)})</option>`).join('')}</select></div>
+                                <div class="form-group" style="align-self:end;"><button class="btn btn-success" onclick="assignOrderUser(${o.id})">שייך משתמש</button></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>שם אורח</label><input type="text" id="oa_gname_${o.id}" value="${escapeHtml(o.guest_name||'')}"></div>
+                                <div class="form-group"><label>טלפון אורח</label><input type="text" id="oa_gphone_${o.id}" value="${escapeHtml(o.guest_phone||'')}"></div>
+                            </div>
+                            <button class="btn btn-success" onclick="assignOrderGuest(${o.id})">שייך כאורח</button>
+                        </div></td></tr>`;
                 }
             });
             h+='</table></div>'; content.innerHTML=h;
         }
         function toggleOrderExpand(id){ expandedOrderId=expandedOrderId===id?null:id; renderOrders(); }
+        function toggleOrderAssign(id){ const el=document.getElementById('order_assign_'+id); el.style.display=el.style.display==='none'?'block':'none'; }
+        async function assignOrderUser(id){
+            const uid=document.getElementById('oa_user_'+id).value||null; const t=localStorage.getItem('adminToken');
+            try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/assign-user`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({user_id:uid})});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שויך','success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
+        }
+        async function assignOrderGuest(id){
+            const name=document.getElementById('oa_gname_'+id).value.trim(),phone=document.getElementById('oa_gphone_'+id).value.trim(); const t=localStorage.getItem('adminToken');
+            try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/assign-guest`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({name,phone})});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שויך כאורח','success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
+        }
+        async function orderSurveyCall(id,stage){
+            if(!confirm('לשלוח שיחת סקר טלפונית ללקוח?'))return; const t=localStorage.getItem('adminToken');
+            try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/survey-call/${stage}`,{method:'POST',headers:{'Authorization':`Bearer ${t}`}});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שיחת סקר נשלחה','success');}catch(e){showMessage(e.message||'שגיאה','error');}
+        }
 
         async function updateOrderStatus(id, status) {
             const token = localStorage.getItem('adminToken');
