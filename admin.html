@@ -2220,9 +2220,22 @@
                                 </tr>
                             `).join('')}
                         </table>
+                        ${(order.warranties && order.warranties.length) ? `
+                        <h4 style="margin-top:20px;">אחריות וסריאלים:</h4>
+                        ${order.warranties.map(w => `
+                            <div style="border:1px solid #CFD7F0; border-radius:8px; padding:10px; margin-top:8px;">
+                                <div><strong>${escapeHtml(w.product_name || 'מוצר')}</strong> — סטטוס: ${escapeHtml(w.status || '-')}</div>
+                                ${w.serial_number
+                                    ? `<div style="color:#27ae60; margin-top:4px;">✓ סריאלי: ${escapeHtml(w.serial_number)}</div>`
+                                    : `<div style="position:relative; margin-top:6px; display:flex; gap:6px;">
+                                        <input type="text" id="assignSerial_${w.id}" placeholder="הקלד מספר סריאלי מהמאגר" oninput="serialSearch(${w.id})" autocomplete="off" style="flex:1;">
+                                        <button class="btn btn-success" onclick="assignSerial(${w.id}, ${order.id})">שייך</button>
+                                        <div id="serialResults_${w.id}" style="display:none; position:absolute; top:100%; right:0; left:0; background:#fff; border:1px solid #CFD7F0; border-radius:6px; z-index:10; max-height:160px; overflow:auto;"></div>
+                                    </div>`}
+                            </div>`).join('')}` : ''}
                     </div>
                 `;
-                
+
                 document.getElementById('orderDetails').innerHTML = details;
                 document.getElementById('orderModal').classList.add('active');
             } catch (err) {
@@ -2232,6 +2245,37 @@
 
         function closeOrderModal() {
             document.getElementById('orderModal').classList.remove('active');
+        }
+
+        // שיוך סריאלי לאחריות בהזמנה — חיפוש autocomplete מהמאגר הקיים (סטטוס "במלאי")
+        let serialSearchTimer = null;
+        function serialSearch(wid){
+            clearTimeout(serialSearchTimer);
+            serialSearchTimer = setTimeout(async () => {
+                const token = localStorage.getItem('adminToken');
+                const q = document.getElementById('assignSerial_' + wid).value.trim();
+                const box = document.getElementById('serialResults_' + wid); if(!box) return;
+                if(q.length < 1){ box.style.display='none'; return; }
+                try{
+                    const rows = await fetch(`${API_URL}/api/admin/available-serials?q=${encodeURIComponent(q)}`,{headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.json());
+                    if(!Array.isArray(rows)||!rows.length){ box.innerHTML='<div style="padding:6px;color:#888;">אין סריאלי תואם במלאי</div>'; box.style.display='block'; return; }
+                    box.innerHTML = rows.map(r=>`<div style="padding:6px;cursor:pointer;border-bottom:1px solid #eee;" onclick="pickSerial(${wid},'${escapeJsAttr(r.serial_number)}')">${escapeHtml(r.serial_number)}${r.model?' · '+escapeHtml(r.model):''}</div>`).join('');
+                    box.style.display='block';
+                }catch(e){ box.style.display='none'; }
+            }, 250);
+        }
+        function pickSerial(wid, sn){ document.getElementById('assignSerial_'+wid).value = sn; const b=document.getElementById('serialResults_'+wid); if(b) b.style.display='none'; }
+        async function assignSerial(wid, orderId){
+            const token = localStorage.getItem('adminToken');
+            const serial = document.getElementById('assignSerial_'+wid).value.trim();
+            if(!serial){ showMessage('הזן מספר סריאלי','error'); return; }
+            try{
+                const res = await fetch(`${API_URL}/api/admin/warranty/${wid}/assign-serial`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({serial_number:serial})});
+                const d = await res.json();
+                if(!res.ok){ showMessage(d.error||'שגיאה בשיוך','error'); return; }
+                showMessage('הסריאלי שויך לאחריות','success');
+                viewOrder(orderId);
+            }catch(e){ showMessage('שגיאה בשיוך','error'); }
         }
 
         // Users
