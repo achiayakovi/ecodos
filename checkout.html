@@ -1781,8 +1781,15 @@
             <section class="checkout-section">
                 <div class="checkout-container">
                     <div class="checkout-form">
-                        <h2>פרטי משלוח</h2>
+                        <h2>פרטי הזמנה</h2>
                         <form id="checkoutForm">
+                            <div class="form-group">
+                                <label>אופן קבלה *</label>
+                                <div style="display:flex; gap:18px; margin-top:6px;">
+                                    <label style="font-weight:normal;"><input type="radio" name="deliveryMethod" value="משלוח" checked onchange="onDeliveryMethodChange()"> משלוח</label>
+                                    <label style="font-weight:normal;"><input type="radio" name="deliveryMethod" value="איסוף" onchange="onDeliveryMethodChange()"> איסוף עצמי</label>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="fullName">שם מלא *</label>
                                 <input type="text" id="fullName" required>
@@ -1795,9 +1802,14 @@
                                 <label for="email">אימייל *</label>
                                 <input type="email" id="email" required>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" id="addressGroup">
                                 <label for="address">כתובת משלוח *</label>
                                 <textarea id="address" required placeholder="רחוב, מספר בית, עיר, מיקוד"></textarea>
+                            </div>
+                            <div class="form-group" id="pickupGroup" style="display:none;">
+                                <label for="pickupLocation">נקודת איסוף *</label>
+                                <select id="pickupLocation"></select>
+                                <div id="pickupInfo" style="font-size:13px; color:#5A6C7D; margin-top:6px;"></div>
                             </div>
                             <div class="form-group">
                                 <label for="notes">הערות להזמנה</label>
@@ -2171,6 +2183,97 @@ updateAccountButtonPosition();
             }
         }
 
+        // אופן מסירה: משלוח → כתובת חובה; איסוף → מציגים בורר נקודת איסוף
+        function onDeliveryMethodChange(){
+            const method=(document.querySelector('input[name="deliveryMethod"]:checked')||{}).value||'משלוח';
+            const group=document.getElementById('addressGroup');
+            const addr=document.getElementById('address');
+            const pickupGroup=document.getElementById('pickupGroup');
+            const pickupSel=document.getElementById('pickupLocation');
+            const isShip=method==='משלוח';
+            if(group) group.style.display=isShip?'':'none';
+            if(addr) addr.required=isShip;
+            if(pickupGroup) pickupGroup.style.display=isShip?'none':'';
+            if(pickupSel) pickupSel.required=!isShip;
+            if(!isShip) showPickupInfo();
+        }
+        let pickupLocations=[];
+        async function loadPickupLocations(){
+            const sel=document.getElementById('pickupLocation'); if(!sel) return;
+            try{
+                pickupLocations=await fetch(`${API_URL}/api/pickup-locations`).then(r=>r.json());
+            }catch(e){ pickupLocations=[]; }
+            if(!Array.isArray(pickupLocations)||!pickupLocations.length){
+                sel.innerHTML='<option value="">— אין נקודות איסוף זמינות —</option>';
+            }else{
+                sel.innerHTML=pickupLocations.map(p=>`<option value="${p.id}">${p.name} — ${p.address}</option>`).join('');
+            }
+            sel.onchange=showPickupInfo;
+            showPickupInfo();
+        }
+        function showPickupInfo(){
+            const sel=document.getElementById('pickupLocation'); const info=document.getElementById('pickupInfo');
+            if(!sel||!info) return;
+            const p=pickupLocations.find(x=>String(x.id)===String(sel.value));
+            info.textContent=p?[p.address,p.phone?('טלפון: '+p.phone):'',p.hours?('שעות: '+p.hours):''].filter(Boolean).join(' · '):'';
+        }
+
+        // מסך הצלחה מתמשך אחרי שליחת הזמנה (במקום טוסט שנעלם)
+        function showOrderSuccess(order, cart, isLoggedIn, hasEmail) {
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const total = (order && order.total_amount != null)
+                ? Number(order.total_amount)
+                : cart.reduce((s, it) => s + (it.price * it.quantity), 0);
+            const itemsHTML = cart.map(it => `
+                <div class="success-item">
+                    <span>${esc(it.name)} <span style="opacity:.65;">x${it.quantity}</span></span>
+                    <span style="white-space:nowrap;">₪${(it.price * it.quantity).toFixed(2)}</span>
+                </div>`).join('');
+            const emailLine = hasEmail ? ' אישור הזמנה נשלח לכתובת המייל שלך.' : '';
+            const primaryBtn = isLoggedIn
+                ? `<a href="account.html" class="success-btn primary">לאזור האישי</a>`
+                : `<a href="index.html" class="success-btn primary">לדף הבית</a>`;
+
+            if (!document.getElementById('orderSuccessStyles')) {
+                const st = document.createElement('style');
+                st.id = 'orderSuccessStyles';
+                st.textContent = `
+                #orderSuccessOverlay{position:fixed;inset:0;z-index:99999;background:rgba(10,15,25,.6);display:flex;align-items:center;justify-content:center;padding:20px;}
+                #orderSuccessOverlay .success-card{background:#fff;color:#1A2332;max-width:460px;width:100%;max-height:90vh;overflow:auto;border-radius:18px;padding:32px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);font-family:'Heebo','Rubik',Arial,sans-serif;}
+                #orderSuccessOverlay .success-check{width:64px;height:64px;border-radius:50%;background:#27ae60;color:#fff;font-size:36px;line-height:64px;margin:0 auto 14px;}
+                #orderSuccessOverlay h2{margin:0 0 6px;font-size:1.6rem;}
+                #orderSuccessOverlay .success-sub{margin:0 0 16px;color:#5A6C7D;line-height:1.5;}
+                #orderSuccessOverlay .success-order-no{margin-bottom:14px;font-size:1.05rem;}
+                #orderSuccessOverlay .success-items{text-align:right;margin:0 0 6px;}
+                #orderSuccessOverlay .success-item{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.08);}
+                #orderSuccessOverlay .success-total{display:flex;justify-content:space-between;font-weight:700;font-size:1.15rem;padding:12px 0 18px;border-top:2px solid rgba(0,0,0,.1);margin-top:6px;}
+                #orderSuccessOverlay .success-actions{display:flex;flex-direction:column;gap:10px;}
+                #orderSuccessOverlay .success-btn{display:block;padding:13px;border-radius:10px;text-decoration:none;font-weight:600;border:1px solid #1E6FD9;color:#1E6FD9;}
+                #orderSuccessOverlay .success-btn.primary{background:#1E6FD9;color:#fff;border-color:#1E6FD9;}`;
+                document.head.appendChild(st);
+            }
+
+            const overlay = document.createElement('div');
+            overlay.id = 'orderSuccessOverlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.innerHTML = `
+                <div class="success-card">
+                    <div class="success-check">✓</div>
+                    <h2>ההזמנה התקבלה!</h2>
+                    <p class="success-sub">אנחנו מטפלים בה במהירות האפשרית.${emailLine}</p>
+                    <div class="success-order-no">מספר הזמנה: <strong>#${order.id}</strong></div>
+                    <div class="success-items">${itemsHTML}</div>
+                    <div class="success-total"><span>סה"כ</span><span>₪${total.toFixed(2)}</span></div>
+                    <div class="success-actions">
+                        ${primaryBtn}
+                        <a href="shop.html" class="success-btn">להמשך קנייה</a>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+        }
+
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -2181,12 +2284,22 @@ updateAccountButtonPosition();
             const token = localStorage.getItem('token');
             const cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
+            const deliveryMethod = (document.querySelector('input[name="deliveryMethod"]:checked') || {}).value || 'משלוח';
+            const pickupId = (document.getElementById('pickupLocation') || {}).value || '';
+            if (deliveryMethod === 'איסוף' && !pickupId) {
+                showToast('יש לבחור נקודת איסוף', 'error');
+                submitBtn.disabled = false; submitBtn.textContent = 'שלח הזמנה';
+                return;
+            }
             const orderData = {
                 items: cart.map(item => ({
                     product_id: item.id,
                     quantity: item.quantity
                 })),
-                shipping_address: document.getElementById('address').value,
+                delivery_method: deliveryMethod,
+                shipping_address: deliveryMethod === 'משלוח' ? document.getElementById('address').value : '',
+                pickup_location_id: deliveryMethod === 'איסוף' ? parseInt(pickupId, 10) : null,
+                notes: (document.getElementById('notes') ? document.getElementById('notes').value : ''),
                 guest_name: document.getElementById('fullName').value,
                 guest_phone: document.getElementById('phone').value,
                 guest_email: document.getElementById('email').value
@@ -2206,14 +2319,13 @@ if (!response.ok) {
     throw new Error(errData.error || 'שגיאה ביצירת הזמנה');
 }
                 const order = await response.json();
-                
-                // ניקוי עגלה
+
+                // מסך הצלחה מתמשך — מוצג לאורח ולמחובר כאחד, עד שהמשתמש בוחר לאן להמשיך
+                const hasEmail = !!(document.getElementById('email').value || '').trim();
+                showOrderSuccess(order, cart, !!token, hasEmail);
+
+                // ניקוי עגלה לאחר שצילמנו אותה למסך ההצלחה
                 localStorage.removeItem('cart');
-                
-                showToast(`ההזמנה נשלחה בהצלחה! מספר הזמנה: ${order.id}`, 'success', 3000);
-                setTimeout(() => {
-                    window.location.href = token ? 'account.html' : 'index.html';
-                }, 3000);
             } catch (error) {
                 console.error('Error:', error);
 showToast(error.message || 'שגיאה בשליחת ההזמנה. אנא נסה שוב.', 'error');
@@ -2241,6 +2353,7 @@ showToast(error.message || 'שגיאה בשליחת ההזמנה. אנא נסה 
         });
             loadOrderSummary();
         loadUserProfile();
+        loadPickupLocations();
 
         // כפתור עגלת קניות
     </script>

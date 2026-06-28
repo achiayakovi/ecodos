@@ -385,6 +385,12 @@
             <h2>ניהול הזמנות</h2>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
                 <input type="text" id="orderSearch" placeholder="חיפוש לפי שם/טלפון/אימייל/מספר הזמנה..." oninput="searchOrders()" style="flex:1;min-width:200px;">
+                <select id="surveyFilter" onchange="renderOrders()" title="סינון לפי מצב סקר">
+                    <option value="all">כל הסקרים</option>
+                    <option value="done">הגיבו</option>
+                    <option value="pending">נשלח · טרם הגיב</option>
+                    <option value="notsent">לא נשלח</option>
+                </select>
                 <button class="btn btn-primary" onclick="toggleManualOrder()">➕ הזמנה ידנית</button>
             </div>
             <form id="manualOrderForm" onsubmit="createManualOrder(event)" style="display:none;background:#fafbfc;padding:16px;border-radius:8px;margin-bottom:18px;border:1px solid #CFD7F0;">
@@ -511,6 +517,21 @@
                     <button class="btn btn-primary" onclick="addCategory()" style="margin-bottom: 0; height: 46px;">הוסף</button>
                 </div>
                 <div id="categoryMessage" style="margin-top: 15px; display: none;"></div>
+            </div>
+
+            <div style="background: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #CFD7F0; max-width: 600px; margin-top: 20px;">
+                <h3 style="margin-bottom: 20px; color: #1A2332;">כתובות איסוף עצמי</h3>
+                <p style="color: #5A6C7D; margin-bottom: 20px; font-size: 0.95rem;">הנקודות שיוצגו ללקוח בקליטה כשבוחר "איסוף עצמי".</p>
+                <div id="pickupList" style="margin-bottom: 20px;"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>שם נקודה</label><input type="text" id="newPickupName" placeholder="למשל: סניף מרכז"></div>
+                    <div class="form-group"><label>כתובת</label><input type="text" id="newPickupAddress" placeholder="רחוב, מספר, עיר"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>טלפון (אופציונלי)</label><input type="text" id="newPickupPhone"></div>
+                    <div class="form-group"><label>שעות פעילות (אופציונלי)</label><input type="text" id="newPickupHours"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addPickupLocation()">הוסף נקודת איסוף</button>
             </div>
         </div>
 
@@ -973,7 +994,47 @@
             else if (tab === 'settings') {
                 if (typeof renderCategoriesList === 'function') renderCategoriesList();
                 if (typeof renderProductTypesList === 'function') renderProductTypesList();
+                if (typeof loadPickupLocationsAdmin === 'function') loadPickupLocationsAdmin();
             }
+        }
+
+        // ===== כתובות איסוף עצמי =====
+        async function loadPickupLocationsAdmin(){
+            const t=localStorage.getItem('adminToken'); const el=document.getElementById('pickupList'); if(!el) return;
+            try{
+                const list=await fetch(`${API_URL}/api/admin/pickup-locations`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json());
+                if(!Array.isArray(list)||!list.length){ el.innerHTML='<p style="color:#5A6C7D;">אין נקודות איסוף עדיין.</p>'; return; }
+                el.innerHTML=list.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border:1px solid #CFD7F0;border-radius:8px;margin-bottom:8px;">
+                    <div><strong>${escapeHtml(p.name)}</strong> ${p.is_active?'':'<span style="color:#e74c3c;">(לא פעיל)</span>'}<br><span style="color:#5A6C7D;font-size:0.9rem;">${escapeHtml(p.address)}${p.phone?' · '+escapeHtml(p.phone):''}${p.hours?' · '+escapeHtml(p.hours):''}</span></div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn" onclick="togglePickupActive(${p.id},${p.is_active?'false':'true'})">${p.is_active?'השבת':'הפעל'}</button>
+                        <button class="btn btn-danger" onclick="deletePickupLocation(${p.id})">מחק</button>
+                    </div>
+                </div>`).join('');
+            }catch(e){ el.innerHTML='<p style="color:#e74c3c;">שגיאה בטעינה</p>'; }
+        }
+        async function addPickupLocation(){
+            const t=localStorage.getItem('adminToken');
+            const name=document.getElementById('newPickupName').value.trim();
+            const address=document.getElementById('newPickupAddress').value.trim();
+            const phone=document.getElementById('newPickupPhone').value.trim();
+            const hours=document.getElementById('newPickupHours').value.trim();
+            if(!name||!address){ showMessage('שם וכתובת נדרשים','error'); return; }
+            try{
+                const r=await fetch(`${API_URL}/api/admin/pickup-locations`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({name,address,phone,hours})});
+                if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error(d.error||'שגיאה'); }
+                ['newPickupName','newPickupAddress','newPickupPhone','newPickupHours'].forEach(id=>document.getElementById(id).value='');
+                showMessage('נקודת איסוף נוספה','success'); loadPickupLocationsAdmin();
+            }catch(e){ showMessage(e.message||'שגיאה','error'); }
+        }
+        async function togglePickupActive(id,active){
+            const t=localStorage.getItem('adminToken');
+            try{ await fetch(`${API_URL}/api/admin/pickup-locations/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({is_active:active})}); loadPickupLocationsAdmin(); }catch(e){ showMessage('שגיאה','error'); }
+        }
+        async function deletePickupLocation(id){
+            if(!confirm('למחוק נקודת איסוף זו?')) return;
+            const t=localStorage.getItem('adminToken');
+            try{ await fetch(`${API_URL}/api/admin/pickup-locations/${id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${t}`}}); showMessage('נמחק','success'); loadPickupLocationsAdmin(); }catch(e){ showMessage('שגיאה','error'); }
         }
 
         // ===== תקשורת לקוחות =====
@@ -1982,11 +2043,39 @@
             const opts=[['pending','ממתין'],['completed','הושלם'],['cancelled','בוטל']];
             return `<select class="status-select" onclick="event.stopPropagation();" onchange="updateOrderStatus(${o.id}, this.value)">${opts.map(([v,t])=>`<option value="${v}" ${o.status===v?'selected':''}>${t}</option>`).join('')}</select>`;
         }
+        // מצב סקר לשלב: done (הגיב) / pending (נשלח, טרם הגיב) / notsent
+        function surveyStageState(o, stage){
+            if(o['survey_'+stage+'_done']) return 'done';
+            if(o['survey_'+stage+'_sent_at']) return 'pending';
+            return 'notsent';
+        }
+        // חיווי דינמי: 🟢 הגיב · 📞 שיחה · 📧 מייל · ⚪ לא נשלח (כפתור "חייג" רק אם טרם הגיב).
+        // הערוץ נגזר מהלקוח: יש מייל → מייל; אין → טלפון — כמו ה-backend.
+        function surveyStageCell(o, stage, label){
+            const state=surveyStageState(o,stage);
+            const hasEmail=!!(o.email||o.guest_email);
+            const callAt=o['survey_'+stage+'_call_at'];
+            const sentAt=o['survey_'+stage+'_sent_at'];
+            const dt=callAt||sentAt;
+            const dstr=dt?new Date(dt).toLocaleDateString('he-IL'):'';
+            let icon;
+            if(state==='done') icon='🟢 הגיב';
+            else if(callAt) icon=`📞 שיחה · ${dstr}`;
+            else if(state==='pending') icon=hasEmail?`📧 מייל · ${dstr}`:`📞 שיחה · ${dstr}`;
+            else icon='⚪ לא נשלח';
+            const btn=state!=='done'
+                ? ` <button onclick="event.stopPropagation();orderSurveyCall(${o.id},'${stage}')" style="font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid #1E6FD9;background:#fff;color:#1E6FD9;cursor:pointer;">חייג</button>`
+                : '';
+            return `<div style="font-size:12px;white-space:nowrap;margin:2px 0;"><b>${label}:</b> ${icon}${btn}</div>`;
+        }
         function renderOrders(){
             const content=document.getElementById('ordersContent');
             if(!Array.isArray(ordersData)||!ordersData.length){content.innerHTML='<p class="empty-state">אין הזמנות</p>';return;}
-            let h='<div class="table-container"><table><tr><th></th><th>מספר</th><th>לקוח</th><th>סכום</th><th>סטטוס</th><th>תאריך</th></tr>';
-            ordersData.forEach(o=>{
+            const sf=(document.getElementById('surveyFilter')||{}).value||'all';
+            const rows=ordersData.filter(o=>{ if(sf==='all')return true; return [surveyStageState(o,'purchase'),surveyStageState(o,'day30')].includes(sf); });
+            if(!rows.length){content.innerHTML='<p class="empty-state">אין הזמנות תואמות</p>';return;}
+            let h='<div class="table-container"><table><tr><th></th><th>מספר</th><th>לקוח</th><th>סכום</th><th>סטטוס</th><th>סקר</th><th>תאריך</th></tr>';
+            rows.forEach(o=>{
                 const open=expandedOrderId===o.id;
                 h+=`<tr style="cursor:pointer;" onclick="toggleOrderExpand(${o.id})">
                     <td>${open?'▲':'▼'}</td>
@@ -1994,21 +2083,22 @@
                     <td>${escapeHtml(o.full_name||o.email||'-')}</td>
                     <td>₪${o.total_amount}</td>
                     <td>${orderStatusSelect(o)}</td>
+                    <td onclick="event.stopPropagation();">${surveyStageCell(o,'purchase','רכישה')}${surveyStageCell(o,'day30','30 יום')}</td>
                     <td>${new Date(o.created_at).toLocaleDateString('he-IL')}</td></tr>`;
                 if(open){
-                    h+=`<tr><td colspan="6" style="background:#f8f9fa; padding:10px 14px;">
+                    h+=`<tr><td colspan="7" style="background:#f8f9fa; padding:10px 14px;">
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
                             <div><span style="color:#888;">אימייל: </span>${escapeHtml(o.email||o.guest_email||'-')}</div>
                             <div><span style="color:#888;">טלפון: </span>${escapeHtml(o.guest_phone||'-')}</div>
+                            <div><span style="color:#888;">אופן קבלה: </span>${o.delivery_method==='איסוף'?('איסוף עצמי · '+escapeHtml(o.pickup_name||'-')+(o.pickup_address?' ('+escapeHtml(o.pickup_address)+')':'')):'משלוח'}</div>
                             <div><span style="color:#888;">כתובת: </span>${escapeHtml(o.shipping_address||'-')}</div>
+                            <div><span style="color:#888;">הערות: </span>${escapeHtml(o.notes||'-')}</div>
                             <div><span style="color:#888;">תשלום: </span>${escapeHtml(o.payment_status||'-')}</div>
                             <div><span style="color:#888;">סוג: </span>${o.user_id?'לקוח רשום':'אורח'}</div>
                             <div><span style="color:#888;">סריאלים משויכים: </span><span id="as_count_${o.id}">…</span></div>
                         </div>
                         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
                             <button class="btn btn-primary" onclick="event.stopPropagation();viewOrder(${o.id})">צפה במוצרים</button>
-                            <button class="btn btn-edit" onclick="event.stopPropagation();orderSurveyCall(${o.id},'purchase')">📞 סקר רכישה</button>
-                            <button class="btn btn-edit" onclick="event.stopPropagation();orderSurveyCall(${o.id},'day30')">📞 סקר 30 יום</button>
                             <button class="btn" onclick="event.stopPropagation();toggleOrderAssign(${o.id})">שיוך לקוח</button>
                         </div>
                         <div id="order_assign_${o.id}" style="display:none;margin-top:10px;background:#fff;padding:12px;border-radius:6px;">
@@ -2068,22 +2158,36 @@
             try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/assign-guest`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({name,phone})});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שויך כאורח','success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
         }
         async function orderSurveyCall(id,stage){
-            if(!confirm('לשלוח שיחת סקר טלפונית ללקוח?'))return; const t=localStorage.getItem('adminToken');
-            try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/survey-call/${stage}`,{method:'POST',headers:{'Authorization':`Bearer ${t}`}});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שיחת סקר נשלחה','success');}catch(e){showMessage(e.message||'שגיאה','error');}
+            const label=stage==='day30'?'30 יום':'רכישה';
+            if(!confirm(`לחייג סקר ${label} להזמנה #${id}?`))return; const t=localStorage.getItem('adminToken');
+            try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/survey-call/${stage}`,{method:'POST',headers:{'Authorization':`Bearer ${t}`}});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage(`יצאה שיחת סקר ל-${d.phone||''}`,'success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
         }
 
         async function updateOrderStatus(id, status) {
             const token = localStorage.getItem('adminToken');
+            let return_serials = false;
             try {
-                await fetch(`${API_URL}/api/admin/orders/${id}`, {
+                // בביטול — אם משויכים סריאלים, לשאול אם להחזירם למלאי
+                if (status === 'cancelled') {
+                    const chk = await fetch(`${API_URL}/api/admin/orders/${id}/assigned-serials`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const cd = await chk.json().catch(() => ({}));
+                    if (chk.ok && cd.count > 0) {
+                        return_serials = confirm(`להזמנה משויכים ${cd.count} סריאלים. להחזירם למלאי? (אישור = חוזרים למלאי; ביטול = נשארים "נמכר")`);
+                    }
+                }
+                const res = await fetch(`${API_URL}/api/admin/orders/${id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ status })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ status, return_serials })
                 });
+                if (!res.ok) {
+                    const d = await res.json().catch(() => ({}));
+                    showMessage(d.error || 'שגיאה בעדכון סטטוס', 'error');
+                    loadOrders();
+                    return;
+                }
                 showMessage('סטטוס עודכן', 'success');
+                loadOrders();
             } catch (err) {
                 showMessage('שגיאה', 'error');
             }
