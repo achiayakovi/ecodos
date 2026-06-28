@@ -1273,7 +1273,7 @@
         }
 
         // ===== קליטה + מאגר סריאלים =====
-        let receivingData = [], expandedReceivingId = null, serialsData = [];
+        let receivingData = [], expandedReceivingId = null, serialsData = [], editingReceivingId = null;
         function toggleReceivingAdd(){ const f=document.getElementById('receivingAddForm'); f.style.display=f.style.display==='none'?'block':'none'; }
         function toggleManualSerial(){ const f=document.getElementById('manualSerialForm'); f.style.display=f.style.display==='none'?'block':'none'; }
         async function loadReceiving(){
@@ -1306,7 +1306,25 @@
                     <td>${escapeHtml(rc.model||'-')}</td>
                     <td>${rc.quantity_received??'-'}</td>
                     <td>${rc.serials_count||0}</td></tr>`;
-                if(open){
+                if(open && editingReceivingId===rc.id){
+                    h+=`<tr><td colspan="6" style="background:#fffbe6; padding:10px 14px;">
+                        <strong>עריכת קליטה #${rc.id}</strong>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-top:8px;">
+                            <div class="form-group" style="margin:0;"><label>תאריך</label><input type="date" id="er_date_${rc.id}" value="${rc.receiving_date?new Date(rc.receiving_date).toISOString().slice(0,10):''}"></div>
+                            <div class="form-group" style="margin:0;"><label>ספק</label><input type="text" id="er_supplier_${rc.id}" value="${escapeHtml(rc.supplier_name||'')}"></div>
+                            <div class="form-group" style="margin:0;"><label>אסמכתא</label><input type="text" id="er_ref_${rc.id}" value="${escapeHtml(rc.shipment_ref||'')}"></div>
+                            <div class="form-group" style="margin:0;"><label>דגם</label><input type="text" id="er_model_${rc.id}" value="${escapeHtml(rc.model||'')}"></div>
+                            <div class="form-group" style="margin:0;"><label>הוזמן</label><input type="number" id="er_qd_${rc.id}" value="${rc.quantity_declared??''}"></div>
+                            <div class="form-group" style="margin:0;"><label>נקלט</label><input type="number" id="er_qr_${rc.id}" value="${rc.quantity_received??''}"></div>
+                            <div class="form-group" style="margin:0;"><label>סטטוס</label><input type="text" id="er_status_${rc.id}" value="${escapeHtml(rc.status||'')}"></div>
+                            <div class="form-group" style="margin:0;"><label>הערות</label><input type="text" id="er_notes_${rc.id}" value="${escapeHtml(rc.notes||'')}"></div>
+                        </div>
+                        <div style="margin-top:8px; color:#888; font-size:13px;">שינוי הדגם יוחל גם על כל הסריאלים שנקלטו בקליטה זו.</div>
+                        <div style="margin-top:8px;">
+                            <button class="btn btn-success" onclick="event.stopPropagation();saveReceivingInline(${rc.id})">שמור</button>
+                            <button class="btn" onclick="event.stopPropagation();cancelEditReceiving()">ביטול</button>
+                        </div></td></tr>`;
+                } else if(open){
                     h+=`<tr><td colspan="6" style="background:#f8f9fa; padding:10px 14px;">
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
                             <div><span style="color:#888;">אסמכתא: </span>${escapeHtml(rc.shipment_ref||'-')}</div>
@@ -1325,12 +1343,33 @@
                                 <button class="btn btn-primary" onclick="event.stopPropagation();addReceivingSerials(${rc.id})">הוסף</button>
                             </div>
                         </div>
-                        <div style="margin-top:10px;"><button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
+                        <div style="margin-top:10px;"><button class="btn btn-edit" onclick="event.stopPropagation();startEditReceiving(${rc.id})">✏️ ערוך פרטים</button> <button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
                 }
             });
             h+='</table></div>'; content.innerHTML=h;
         }
-        function toggleReceivingExpand(id){ expandedReceivingId=expandedReceivingId===id?null:id; renderReceiving(); }
+        function toggleReceivingExpand(id){ expandedReceivingId=expandedReceivingId===id?null:id; if(editingReceivingId&&editingReceivingId!==expandedReceivingId) editingReceivingId=null; renderReceiving(); }
+        function startEditReceiving(id){ editingReceivingId=id; expandedReceivingId=id; renderReceiving(); }
+        function cancelEditReceiving(){ editingReceivingId=null; renderReceiving(); }
+        async function saveReceivingInline(id){
+            const token=localStorage.getItem('adminToken');
+            const g=k=>document.getElementById(k+id);
+            const body={
+                receiving_date: g('er_date_').value||null,
+                supplier_name: g('er_supplier_').value.trim(),
+                shipment_ref: g('er_ref_').value.trim(),
+                model: g('er_model_').value.trim(),
+                quantity_declared: g('er_qd_').value!==''?parseInt(g('er_qd_').value,10):null,
+                quantity_received: g('er_qr_').value!==''?parseInt(g('er_qr_').value,10):null,
+                status: g('er_status_').value.trim(),
+                notes: g('er_notes_').value.trim()
+            };
+            try{
+                const res=await fetch(`${API_URL}/api/admin/receiving/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+                if(!res.ok){ const d=await res.json().catch(()=>({})); showMessage(d.error||'שגיאה','error'); return; }
+                showMessage('הקליטה עודכנה (הדגם הוחל גם על הסריאלים)','success'); editingReceivingId=null; loadReceiving();
+            }catch(e){ showMessage('שגיאה בשמירה','error'); }
+        }
         function onRcProductChange(){ const v=document.getElementById('rcProduct').value; document.getElementById('rcNewProduct').style.display = v==='__new__'?'block':'none'; }
         async function addReceiving(e){
             e.preventDefault(); const token=localStorage.getItem('adminToken');
