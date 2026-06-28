@@ -649,19 +649,32 @@
             <form id="receivingAddForm" onsubmit="addReceiving(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
                 <div class="form-row">
                     <div class="form-group"><label>תאריך</label><input type="date" id="rcDate"></div>
-                    <div class="form-group"><label>ספק</label><input type="text" id="rcSupplier"></div>
+                    <div class="form-group"><label>ספק</label><input type="text" id="rcSupplier" placeholder="TPH"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>מוצר קיים</label><select id="rcProductId"><option value="">— בחר / חדש —</option></select></div>
-                    <div class="form-group"><label>או מוצר חדש (שם)</label><input type="text" id="rcNewProduct" placeholder="ייווצר כטיוטה"></div>
+                    <div class="form-group"><label>מס' משלוח</label><input type="text" id="rcShipment"></div>
+                    <div class="form-group"><label>מוצר</label>
+                        <select id="rcProduct" onchange="onRcProductChange()"><option value="">— בחר מוצר —</option><option value="__new__">➕ מוצר חדש</option></select>
+                        <input type="text" id="rcNewProduct" placeholder="שם מוצר חדש" style="display:none; margin-top:6px;"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>כמות שהוזמנה</label><input type="number" id="rcQtyDeclared"></div>
-                    <div class="form-group"><label>כמות שנקלטה (תיכנס למחסן)</label><input type="number" id="rcQtyReceived"></div>
+                    <div class="form-group"><label>כמות מוצהרת</label><input type="number" id="rcQtyDeclared"></div>
+                    <div class="form-group"><label>כמות שהתקבלה (תיכנס למחסן)</label><input type="number" id="rcQtyReceived"></div>
                 </div>
-                <div class="form-group"><label>אסמכתא/מק"ט משלוח</label><input type="text" id="rcShipment"></div>
-                <div class="form-group"><label>הערות</label><textarea id="rcNotes" rows="2"></textarea></div>
-                <div><button type="submit" class="btn btn-primary">שמור קליטה</button> <button type="button" class="btn" onclick="toggleReceivingAdd()">ביטול</button></div>
+                <div class="form-row">
+                    <div class="form-group"><label>גודל מדגם</label><input type="number" id="rcSampleSize"></div>
+                    <div class="form-group"><label>סטטוס</label><select id="rcStatus"><option value="נקלט">נקלט</option><option value="הסגר">הסגר</option></select></div>
+                </div>
+                <div class="form-group"><label>נזק / הערות בדיקת מדגם</label><input type="text" id="rcDamage" placeholder="ממצאי בדיקה / נזקים"></div>
+                <div style="border-top:1px solid #CFD7F0; margin-top:10px; padding-top:10px;">
+                    <label style="font-weight:600;">סריאליים (אופציונלי — רק למוצרים עם סריאלי)</label>
+                    <div class="form-row" style="margin-top:6px;">
+                        <div class="form-group"><label>טווח מ-</label><input type="number" id="rcSerFrom"></div>
+                        <div class="form-group"><label>עד</label><input type="number" id="rcSerTo"></div>
+                    </div>
+                    <div class="form-group"><label>או רשימה (מופרדת בפסיק/שורה — גובר על הטווח)</label><textarea id="rcSerList" rows="2"></textarea></div>
+                </div>
+                <div><button type="submit" class="btn btn-primary">צור קליטה</button> <button type="button" class="btn" onclick="toggleReceivingAdd()">ביטול</button></div>
             </form>
             <div id="receivingLoading" class="loading">טוען...</div>
             <div id="receivingContent"></div>
@@ -1111,8 +1124,8 @@
             const token=localStorage.getItem('adminToken');
             try {
                 const prods=await fetch(`${API_URL}/api/admin/all-products`, {headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.json());
-                const sel=document.getElementById('rcProductId');
-                if(sel && Array.isArray(prods)) sel.innerHTML='<option value="">— בחר / חדש —</option>'+prods.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+                const sel=document.getElementById('rcProduct');
+                if(sel && Array.isArray(prods)) sel.innerHTML='<option value="">— בחר מוצר —</option><option value="__new__">➕ מוצר חדש</option>'+prods.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
             } catch(e){}
             const loading=document.getElementById('receivingLoading'), content=document.getElementById('receivingContent');
             loading.style.display='block'; content.innerHTML='';
@@ -1162,24 +1175,38 @@
             h+='</table></div>'; content.innerHTML=h;
         }
         function toggleReceivingExpand(id){ expandedReceivingId=expandedReceivingId===id?null:id; renderReceiving(); }
+        function onRcProductChange(){ const v=document.getElementById('rcProduct').value; document.getElementById('rcNewProduct').style.display = v==='__new__'?'block':'none'; }
         async function addReceiving(e){
             e.preventDefault(); const token=localStorage.getItem('adminToken');
-            const body={
-                receiving_date:document.getElementById('rcDate').value||null,
-                supplier_name:document.getElementById('rcSupplier').value.trim(),
-                product_id:document.getElementById('rcProductId').value||null,
-                new_product_name:document.getElementById('rcNewProduct').value.trim(),
-                quantity_declared:document.getElementById('rcQtyDeclared').value||null,
-                quantity_received:document.getElementById('rcQtyReceived').value||null,
-                shipment_ref:document.getElementById('rcShipment').value.trim(),
-                notes:document.getElementById('rcNotes').value.trim()
-            };
+            const prodVal=document.getElementById('rcProduct').value;
             try {
-                const res=await fetch(`${API_URL}/api/admin/receiving`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+                const res=await fetch(`${API_URL}/api/admin/receiving`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                    body:JSON.stringify({
+                        receiving_date:document.getElementById('rcDate').value||null,
+                        supplier_name:document.getElementById('rcSupplier').value.trim(),
+                        shipment_ref:document.getElementById('rcShipment').value.trim(),
+                        product_id:(prodVal&&prodVal!=='__new__')?prodVal:null,
+                        new_product_name:prodVal==='__new__'?document.getElementById('rcNewProduct').value.trim():null,
+                        quantity_declared:document.getElementById('rcQtyDeclared').value||null,
+                        quantity_received:document.getElementById('rcQtyReceived').value||null,
+                        sample_size:document.getElementById('rcSampleSize').value||null,
+                        status:document.getElementById('rcStatus').value,
+                        damage_notes:document.getElementById('rcDamage').value.trim()
+                    })});
                 if(!res.ok){const d=await res.json().catch(()=>({}));showMessage(d.error||'שגיאה','error');return;}
-                e.target.reset(); document.getElementById('receivingAddForm').style.display='none';
-                showMessage('קליטה נשמרה','success'); loadReceiving();
-            } catch(err){ showMessage('שגיאה ביצירה','error'); }
+                const created=await res.json();
+                const serFrom=document.getElementById('rcSerFrom').value, serTo=document.getElementById('rcSerTo').value, serList=document.getElementById('rcSerList').value.trim();
+                if(created.id&&(serList||(serFrom&&serTo))){
+                    const sres=await fetch(`${API_URL}/api/admin/receiving/${created.id}/serials`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({from:serFrom||null,to:serTo||null,list:serList||null})});
+                    const sd=await sres.json();
+                    if(!sres.ok) showMessage('הקליטה נוצרה אך הסריאליים נכשלו: '+(sd.error||''),'error');
+                    else showMessage(`קליטה נוצרה · נוספו ${sd.added} סריאליים (דילוג ${sd.skipped})`,'success');
+                } else showMessage('קליטה נוצרה','success');
+                e.target.reset();
+                document.getElementById('rcNewProduct').style.display='none';
+                document.getElementById('receivingAddForm').style.display='none';
+                loadReceiving();
+            } catch(err){ showMessage('שגיאה ביצירת קליטה','error'); }
         }
         async function addReceivingSerials(id){
             const token=localStorage.getItem('adminToken');

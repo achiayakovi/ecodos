@@ -1976,14 +1976,7 @@
         }
 
         function goToCheckout() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                showToast('יש להתחבר כדי להשלים הזמנה', 'error');
-                setTimeout(() => {
-                    window.location.href = 'account.html';
-                }, 1500);
-                return;
-            }
+            // אורח או מחובר — שניהם יכולים להמשיך לתשלום
             window.location.href = 'checkout.html';
         }
 
