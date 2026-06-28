@@ -1695,7 +1695,7 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" id="serial-field-group">
                             <label for="machine-number">מספר סריאלי *</label>
                             <input type="text" id="machine-number" required placeholder="כפי שמופיע על המכשיר">
                         </div>
@@ -1792,21 +1792,36 @@
 
 
         // טעינת סוגי מוצר מה-API
+        let productTypesData = [];
         async function loadProductTypes() {
             const select = document.getElementById('product-type');
             if (!select) return;
             try {
                 const res = await fetch(`${API_URL}/api/product-types`);
-                const types = await res.json();
-                types.forEach(t => {
+                productTypesData = await res.json();
+                productTypesData.forEach(t => {
                     const opt = document.createElement('option');
                     opt.value = t.value;
                     opt.textContent = t.label;
                     select.appendChild(opt);
                 });
+                select.addEventListener('change', updateSerialFieldVisibility);
             } catch (err) {
                 console.error('Failed to load product types:', err);
             }
+        }
+
+        // הצגת/הסתרת שדה הסריאלי לפי סוג המוצר שנבחר
+        function updateSerialFieldVisibility() {
+            const select = document.getElementById('product-type');
+            const group = document.getElementById('serial-field-group');
+            const input = document.getElementById('machine-number');
+            if (!group || !input) return;
+            const t = productTypesData.find(x => x.value === select.value);
+            const requiresSerial = !t || t.has_serial !== false; // ברירת מחדל: דורש סריאלי
+            group.style.display = requiresSerial ? '' : 'none';
+            input.required = requiresSerial;
+            if (!requiresSerial) input.value = '';
         }
         loadProductTypes();
 
