@@ -742,6 +742,19 @@
                 </div>
                 <div><button type="submit" class="btn btn-primary">הוסף</button> <button type="button" class="btn" onclick="toggleManualSerial()">ביטול</button></div>
             </form>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; background:#fafbfc; padding:10px; border-radius:8px;">
+                <strong>פעולה מרובה:</strong>
+                <span>טווח</span>
+                <input type="number" id="bulkFrom" placeholder="מ-" style="width:100px;">
+                <input type="number" id="bulkTo" placeholder="עד" style="width:100px;">
+                <select id="bulkStatus"><option value="במלאי">במלאי</option><option value="נמכר">נמכר</option><option value="הסגר">הסגר</option></select>
+                <button class="btn" onclick="bulkSerial('status','range')">שנה סטטוס לטווח</button>
+                <button class="btn btn-delete" onclick="bulkSerial('delete','range')">מחק טווח</button>
+                <span style="color:#ccc;">|</span>
+                <button class="btn" onclick="bulkSerial('status','ids')">שנה סטטוס למסומנים</button>
+                <button class="btn btn-delete" onclick="bulkSerial('delete','ids')">מחק מסומנים</button>
+                <span id="serialsTotal" style="color:#888; margin-right:auto;"></span>
+            </div>
             <div id="serialsContent"></div>
         </div>
 
@@ -1431,6 +1444,8 @@
                 showMessage('נמחק','success'); loadReceiving();
             } catch(err){ showMessage('שגיאה','error'); }
         }
+        let editingSerialId = null;
+        const SERIAL_STATUSES = ['במלאי', 'נמכר', 'הסגר'];
         async function loadSerials(){
             const token=localStorage.getItem('adminToken');
             const se=document.getElementById('serialSearch'); const q=se?se.value.trim():'';
@@ -1438,14 +1453,66 @@
             try {
                 const res=await fetch(`${API_URL}/api/admin/serials?q=${encodeURIComponent(q)}`, {headers:{'Authorization':`Bearer ${token}`}});
                 const data=await res.json(); serialsData=data.serials||[];
-                if(!serialsData.length){content.innerHTML='<p class="empty-state">אין סריאלים</p>';return;}
-                let h=`<p style="color:#888;">סה"כ במאגר: ${data.total}</p><div class="table-container"><table><tr><th>סריאלי</th><th>דגם</th><th>סטטוס</th><th>פעולות</th></tr>`;
-                serialsData.forEach(s=>{
-                    h+=`<tr><td>${escapeHtml(s.serial_number)}</td><td>${escapeHtml(s.model||'-')}</td><td>${escapeHtml(s.status||'')}</td>
-                        <td><button class="btn btn-delete" style="padding:4px 10px;" onclick="deleteSerial(${s.id})">מחק</button></td></tr>`;
-                });
-                h+='</table></div>'; content.innerHTML=h;
+                const tot=document.getElementById('serialsTotal'); if(tot) tot.textContent=`סה"כ במאגר: ${data.total!=null?data.total:serialsData.length}`;
+                renderSerials();
             } catch(err){ content.innerHTML='<p style="color:#e74c3c;">שגיאה</p>'; }
+        }
+        function renderSerials(){
+            const content=document.getElementById('serialsContent'); if(!content)return;
+            if(!serialsData.length){ content.innerHTML='<p class="empty-state">אין סריאלים</p>'; return; }
+            let h='<div class="table-container"><table><tr><th><input type="checkbox" onchange="document.querySelectorAll(\'.serChk\').forEach(c=>c.checked=this.checked)"></th><th>סריאלי</th><th>דגם</th><th>מקור</th><th>סטטוס</th><th>נוסף ע"י</th><th>פעולות</th></tr>';
+            serialsData.forEach(s=>{
+                const src = s.is_legacy ? 'ידני' : 'קליטה #'+(s.receiving_id||'?');
+                if(s.id===editingSerialId){
+                    const opts=SERIAL_STATUSES.map(st=>`<option value="${st}" ${s.status===st?'selected':''}>${st}</option>`).join('');
+                    h+=`<tr><td></td>
+                        <td><input type="text" id="edSerial_${s.id}" value="${escapeHtml(s.serial_number)}" style="width:130px;"></td>
+                        <td><input type="text" id="edModel_${s.id}" value="${escapeHtml(s.model||'')}" style="width:90px;"></td>
+                        <td>${src}</td>
+                        <td><select id="edStatus_${s.id}">${opts}</select></td>
+                        <td>${escapeHtml(s.created_by_name||'')}</td>
+                        <td><button class="btn btn-success" onclick="saveSerialEdit(${s.id})">שמור</button> <button class="btn" onclick="cancelSerialEdit()">בטל</button></td></tr>`;
+                } else {
+                    h+=`<tr><td><input type="checkbox" class="serChk" value="${s.id}"></td>
+                        <td>${escapeHtml(s.serial_number)}</td>
+                        <td>${escapeHtml(s.model||'')}</td>
+                        <td>${src}</td>
+                        <td>${escapeHtml(s.status||'')}</td>
+                        <td>${escapeHtml(s.created_by_name||'')}</td>
+                        <td><button class="btn btn-primary" onclick="editSerial(${s.id})">ערוך</button> <button class="btn btn-delete" onclick="deleteSerial(${s.id})">מחק</button></td></tr>`;
+                }
+            });
+            h+='</table></div>'; content.innerHTML=h;
+        }
+        function editSerial(id){ editingSerialId=id; renderSerials(); }
+        function cancelSerialEdit(){ editingSerialId=null; renderSerials(); }
+        async function saveSerialEdit(id){
+            const token=localStorage.getItem('adminToken');
+            try{
+                const res=await fetch(`${API_URL}/api/admin/serials/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({ serial_number:document.getElementById('edSerial_'+id).value.trim(), model:document.getElementById('edModel_'+id).value.trim(), status:document.getElementById('edStatus_'+id).value })});
+                const d=await res.json(); if(!res.ok){ showMessage(d.error||'שגיאה בעדכון','error'); return; }
+                showMessage('עודכן','success'); editingSerialId=null; loadSerials();
+            }catch(e){ showMessage('שגיאה בעדכון','error'); }
+        }
+        async function bulkSerial(action, mode){
+            const token=localStorage.getItem('adminToken');
+            const body={action};
+            if(action==='status') body.status=document.getElementById('bulkStatus').value;
+            if(mode==='ids'){
+                body.ids=Array.from(document.querySelectorAll('.serChk:checked')).map(c=>parseInt(c.value,10));
+                if(!body.ids.length){ showMessage('לא סומנו סריאליים','error'); return; }
+            } else {
+                body.from=document.getElementById('bulkFrom').value||null; body.to=document.getElementById('bulkTo').value||null;
+                if(!body.from||!body.to){ showMessage('הזן טווח (מ-/עד)','error'); return; }
+            }
+            if(!confirm(action==='delete'?'למחוק את הסריאליים הנבחרים?':'לשנות סטטוס לסריאליים הנבחרים?')) return;
+            try{
+                const res=await fetch(`${API_URL}/api/admin/serials/bulk-action`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+                const d=await res.json(); if(!res.ok){ showMessage(d.error||'שגיאה','error'); return; }
+                showMessage(`בוצע על ${d.affected} סריאליים`,'success');
+                document.getElementById('bulkFrom').value=''; document.getElementById('bulkTo').value='';
+                loadSerials();
+            }catch(e){ showMessage('שגיאה בפעולה מרובה','error'); }
         }
         async function addManualSerial(e){
             e.preventDefault(); const token=localStorage.getItem('adminToken');
