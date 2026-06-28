@@ -538,6 +538,26 @@
             </div>
 
             <div style="background: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #CFD7F0; max-width: 600px; margin-top: 20px;">
+                <h3 style="margin-bottom: 20px; color: #1A2332;">תגים מיוחדים</h3>
+                <p style="color: #5A6C7D; margin-bottom: 20px; font-size: 0.95rem;">התגים שניתן לבחור בשדה "תג מיוחד" בעריכת מוצר (חדש / מבצע / פופולרי וכו').</p>
+
+                <div id="badgesList" style="margin-bottom: 20px;"></div>
+
+                <div style="display: flex; gap: 10px; align-items: end;">
+                    <div class="form-group" style="flex: 2; margin: 0;">
+                        <label>ערך (מזהה)</label>
+                        <input type="text" id="newBadgeValue" placeholder="למשל: hot">
+                    </div>
+                    <div class="form-group" style="flex: 3; margin: 0;">
+                        <label>תווית (טקסט מוצג)</label>
+                        <input type="text" id="newBadgeLabel" placeholder="למשל: חם!">
+                    </div>
+                    <button class="btn btn-primary" onclick="addBadge()" style="margin-bottom: 0; height: 46px;">הוסף</button>
+                </div>
+                <div id="badgeMessage" style="margin-top: 15px; display: none;"></div>
+            </div>
+
+            <div style="background: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #CFD7F0; max-width: 600px; margin-top: 20px;">
                 <h3 style="margin-bottom: 20px; color: #1A2332;">כתובות איסוף עצמי</h3>
                 <p style="color: #5A6C7D; margin-bottom: 20px; font-size: 0.95rem;">הנקודות שיוצגו ללקוח בקליטה כשבוחר "איסוף עצמי".</p>
                 <div id="pickupList" style="margin-bottom: 20px;"></div>
@@ -879,7 +899,14 @@
                         </select>
                     </div>
                 </div>
-                
+
+                <div class="form-group">
+                    <label>סוג מוצר <span style="color:#888; font-weight:normal;">(קובע אם נדרש סריאלי בהזמנה)</span></label>
+                    <select id="productType">
+                        <option value="">ללא סוג</option>
+                    </select>
+                </div>
+
                 <button type="submit" class="btn btn-primary">שמור</button>
             </form>
         </div>
@@ -1091,6 +1118,7 @@
             else if (tab === 'settings') {
                 if (typeof renderCategoriesList === 'function') renderCategoriesList();
                 if (typeof renderProductTypesList === 'function') renderProductTypesList();
+                if (typeof renderBadgesList === 'function') renderBadgesList();
                 if (typeof loadPickupLocationsAdmin === 'function') loadPickupLocationsAdmin();
             }
         }
@@ -2208,8 +2236,29 @@
             } catch (err) { console.error('Failed to load categories:', err); }
         }
 
-        function openProductModal(product = null) {
-            loadCategoryOptions();
+        async function loadProductTypeOptions() {
+            const select = document.getElementById('productType');
+            if (!select || select.options.length > 1) return;
+            try {
+                const res = await fetch(`${API_URL}/api/product-types`);
+                const types = await res.json();
+                if (!Array.isArray(types)) return;
+                types.forEach(t => { const opt=document.createElement('option'); opt.value=t.value; opt.textContent=t.label + (t.has_serial?' — דורש סריאלי':''); select.appendChild(opt); });
+            } catch (err) { console.error('Failed to load product types:', err); }
+        }
+        async function loadBadgeOptions() {
+            const select = document.getElementById('productBadge');
+            if (!select) return;
+            try {
+                const res = await fetch(`${API_URL}/api/badges`);
+                const badges = await res.json();
+                if (!Array.isArray(badges)) return;
+                select.innerHTML = '<option value="">ללא</option>' + badges.map(b=>`<option value="${escapeHtml(b.value)}">${escapeHtml(b.label)}</option>`).join('');
+            } catch (err) { console.error('Failed to load badges:', err); }
+        }
+
+        async function openProductModal(product = null) {
+            await Promise.all([loadCategoryOptions(), loadProductTypeOptions(), loadBadgeOptions()]);
             const modal = document.getElementById('productModal');
             const title = document.getElementById('productModalTitle');
             
@@ -2229,6 +2278,7 @@
                 document.getElementById('productBadge').value = product.badge || '';
                 document.getElementById('productInStock').value = product.in_stock.toString();
                 document.getElementById('productHasWarranty').value = product.has_warranty.toString();
+                document.getElementById('productType').value = product.product_type || '';
             } else {
                 title.textContent = 'הוספת מוצר';
                 document.getElementById('productForm').reset();
@@ -2262,7 +2312,8 @@
                 sku: document.getElementById('productSku').value || null,
                 badge: document.getElementById('productBadge').value || null,
                 in_stock: document.getElementById('productInStock').value === 'true',
-                has_warranty: document.getElementById('productHasWarranty').value === 'true'
+                has_warranty: document.getElementById('productHasWarranty').value === 'true',
+                product_type: document.getElementById('productType').value || null
             };
 
             try {
@@ -2436,6 +2487,8 @@
                 <h4 style="margin:18px 0 8px;">אחריות / סריאלי</h4>
                 ${order.warranties.map(w => w.serial_number
                     ? `<div style="padding:5px 0;">✓ ${escapeHtml(w.product_name || '')}: <strong>${escapeHtml(w.serial_number)}</strong> <span style="color:#888;">(${escapeHtml(w.status)})</span></div>`
+                    : (w.status !== 'ממתין לסריאלי'
+                    ? `<div style="padding:5px 0;">📄 ${escapeHtml(w.product_name || '')}: אחריות ללא סריאלי <span style="color:#888;">(${escapeHtml(w.status)})</span></div>`
                     : `<div style="margin:8px 0; padding:12px; background:#fff3cd; border-radius:8px;">
                          <div style="margin-bottom:8px;">${escapeHtml(w.product_name || '')} — <strong>ממתין לסריאלי</strong></div>
                          <div style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap;">
@@ -2445,7 +2498,7 @@
                             </div>
                             <button class="btn btn-success" onclick="assignSerial(${w.id}, ${order.id})">שייך</button>
                          </div>
-                       </div>`
+                       </div>`)
                 ).join('')}` : ''}
                 `;
         }
@@ -3057,6 +3110,54 @@
             } catch (err) {
                 alert('שגיאה במחיקה');
             }
+        }
+
+        // ===== Badges Management =====
+        async function renderBadgesList() {
+            const container = document.getElementById('badgesList');
+            if (!container) return;
+            container.innerHTML = '<p style="color: #5A6C7D;">טוען...</p>';
+            try {
+                const res = await fetch(`${API_URL}/api/badges`);
+                const items = await res.json();
+                if (!Array.isArray(items) || items.length === 0) {
+                    container.innerHTML = '<p style="color: #5A6C7D;">אין תגים מוגדרים</p>';
+                    return;
+                }
+                container.innerHTML = items.map(t => `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #CFD7F0; border-radius: 8px; margin-bottom: 8px;">
+                        <span style="color: #5A6C7D; font-size: 0.85rem; width: 100px;">${escapeHtml(t.value)}</span>
+                        <span style="color: #1A2332; flex: 1;">${escapeHtml(t.label)}</span>
+                        <button onclick="removeBadge('${escapeJsAttr(t.value)}')" style="background: rgba(220,53,69,0.2); color: #f77; border: 1px solid rgba(220,53,69,0.3); border-radius: 6px; padding: 4px 10px; cursor: pointer;">הסר</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = '<p style="color: #f77;">שגיאה בטעינה</p>';
+            }
+        }
+        async function addBadge() {
+            const value = document.getElementById('newBadgeValue').value.trim();
+            const label = document.getElementById('newBadgeLabel').value.trim();
+            const msg = document.getElementById('badgeMessage');
+            const token = localStorage.getItem('adminToken');
+            if (!value || !label) { msg.style.display='block'; msg.style.color='#f77'; msg.textContent='יש למלא גם ערך וגם תווית'; return; }
+            try {
+                const res = await fetch(`${API_URL}/api/admin/badges`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({ value, label }) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                document.getElementById('newBadgeValue').value=''; document.getElementById('newBadgeLabel').value='';
+                msg.style.display='block'; msg.style.color='#5ba3f5'; msg.textContent='נוסף בהצלחה';
+                setTimeout(()=>msg.style.display='none',2000);
+                renderBadgesList();
+            } catch (err) { msg.style.display='block'; msg.style.color='#f77'; msg.textContent=err.message||'שגיאה בהוספה'; }
+        }
+        async function removeBadge(value) {
+            const token = localStorage.getItem('adminToken');
+            if (!confirm('למחוק תג זה?')) return;
+            try {
+                await fetch(`${API_URL}/api/admin/badges/${encodeURIComponent(value)}`, { method:'DELETE', headers:{'Authorization':`Bearer ${token}`} });
+                renderBadgesList();
+            } catch (err) { alert('שגיאה במחיקה'); }
         }
 
         // ===== Product Types Management =====
