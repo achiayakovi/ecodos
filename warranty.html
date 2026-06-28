@@ -1806,6 +1806,7 @@
                     select.appendChild(opt);
                 });
                 select.addEventListener('change', updateSerialFieldVisibility);
+                updateSerialFieldVisibility();
             } catch (err) {
                 console.error('Failed to load product types:', err);
             }
@@ -1818,7 +1819,7 @@
             const input = document.getElementById('machine-number');
             if (!group || !input) return;
             const t = productTypesData.find(x => x.value === select.value);
-            const requiresSerial = !t || t.has_serial !== false; // ברירת מחדל: דורש סריאלי
+            const requiresSerial = !!(t && t.has_serial === true); // ברירת מחדל: ללא סריאלי
             group.style.display = requiresSerial ? '' : 'none';
             input.required = requiresSerial;
             if (!requiresSerial) input.value = '';

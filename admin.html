@@ -444,7 +444,7 @@
                         <label>תווית (טקסט מוצג)</label>
                         <input type="text" id="newProductTypeLabel" placeholder="למשל: שקע חכם Type H">
                     </div>
-                    <label style="display:flex; align-items:center; gap:6px; white-space:nowrap; margin-bottom:0; height:46px; color:#1A2332;"><input type="checkbox" id="newProductTypeHasSerial" checked> יש סריאלי</label>
+                    <label style="display:flex; align-items:center; gap:6px; white-space:nowrap; margin-bottom:0; height:46px; color:#1A2332;"><input type="checkbox" id="newProductTypeHasSerial"> יש סריאלי</label>
                     <button class="btn btn-primary" onclick="addProductType()" style="margin-bottom: 0; height: 46px;">הוסף</button>
                 </div>
                 <p style="color:#5A6C7D; font-size:0.85rem; margin-top:10px;">סוג מוצר עם "יש סריאלי" — טופס האחריות יבקש מספר סריאלי. אחרת השדה יוסתר.</p>
@@ -1913,6 +1913,7 @@
         }
 
         // ===== Product Types Management =====
+        let editingTypeValue = null;
         async function renderProductTypesList() {
             const container = document.getElementById('productTypesList');
             if (!container) return;
@@ -1924,14 +1925,21 @@
                     container.innerHTML = '<p style="color: #5A6C7D;">אין סוגי מוצר מוגדרים</p>';
                     return;
                 }
-                container.innerHTML = types.map(t => `
-                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #CFD7F0; border-radius: 8px; margin-bottom: 8px;">
-                        <span style="color: #5A6C7D; font-size: 0.85rem; width: 100px;">${escapeHtml(t.value)}</span>
-                        <span style="color: #1A2332; flex: 1;">${escapeHtml(t.label)}</span>
-                        <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:#1A2332; white-space:nowrap;"><input type="checkbox" ${t.has_serial !== false ? 'checked' : ''} onchange="toggleProductTypeSerial('${escapeJsAttr(t.value)}', this.checked)"> יש סריאלי</label>
-                        <button onclick="removeProductType('${escapeJsAttr(t.value)}')" style="background: rgba(220,53,69,0.2); color: #f77; border: 1px solid rgba(220,53,69,0.3); border-radius: 6px; padding: 4px 10px; cursor: pointer;">הסר</button>
-                    </div>
-                `).join('');
+                container.innerHTML = types.map(t => {
+                    const editing = editingTypeValue === t.value;
+                    const serialCtrl = editing
+                        ? `<label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#1A2332;white-space:nowrap;"><input type="checkbox" id="ptSerialEdit" ${t.has_serial === true ? 'checked' : ''}> יש סריאלי</label>
+                           <button onclick="saveTypeSerial('${escapeJsAttr(t.value)}')" style="background:#C2A875;color:#1A2332;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">שמור</button>
+                           <button onclick="cancelEditType()" style="background:transparent;color:#5A6C7D;border:1px solid #CFD7F0;border-radius:6px;padding:4px 10px;cursor:pointer;">ביטול</button>`
+                        : `<span style="font-size:0.85rem;color:#1A2332;white-space:nowrap;">${t.has_serial === true ? '✓ יש סריאלי' : '— ללא סריאלי'}</span>
+                           <button onclick="editTypeSerial('${escapeJsAttr(t.value)}')" style="background:#2440B0;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">ערוך</button>`;
+                    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#CFD7F0;border-radius:8px;margin-bottom:8px;">
+                        <span style="color:#5A6C7D;font-size:0.85rem;width:100px;">${escapeHtml(t.value)}</span>
+                        <span style="color:#1A2332;flex:1;">${escapeHtml(t.label)}</span>
+                        ${serialCtrl}
+                        <button onclick="removeProductType('${escapeJsAttr(t.value)}')" style="background:rgba(220,53,69,0.2);color:#f77;border:1px solid rgba(220,53,69,0.3);border-radius:6px;padding:4px 10px;cursor:pointer;">הסר</button>
+                    </div>`;
+                }).join('');
             } catch (err) {
                 container.innerHTML = '<p style="color: #f77;">שגיאה בטעינה</p>';
             }
@@ -1958,7 +1966,7 @@
                 if (!res.ok) throw new Error(data.error);
                 document.getElementById('newProductTypeValue').value = '';
                 document.getElementById('newProductTypeLabel').value = '';
-                document.getElementById('newProductTypeHasSerial').checked = true;
+                document.getElementById('newProductTypeHasSerial').checked = false;
                 msg.style.display = 'block'; msg.style.color = '#5ba3f5';
                 msg.textContent = 'נוסף בהצלחה';
                 setTimeout(() => msg.style.display = 'none', 2000);
@@ -1969,7 +1977,10 @@
             }
         }
 
-        async function toggleProductTypeSerial(value, hasSerial) {
+        function editTypeSerial(value) { editingTypeValue = value; renderProductTypesList(); }
+        function cancelEditType() { editingTypeValue = null; renderProductTypesList(); }
+        async function saveTypeSerial(value) {
+            const hasSerial = document.getElementById('ptSerialEdit').checked;
             const token = localStorage.getItem('adminToken');
             try {
                 const res = await fetch(`${API_URL}/api/admin/product-types/${encodeURIComponent(value)}`, {
@@ -1978,9 +1989,10 @@
                     body: JSON.stringify({ has_serial: hasSerial })
                 });
                 if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+                editingTypeValue = null;
+                renderProductTypesList();
             } catch (err) {
                 alert(err.message || 'שגיאה בעדכון');
-                renderProductTypesList();
             }
         }
 
