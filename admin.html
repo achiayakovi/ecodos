@@ -339,6 +339,7 @@
             <button class="tab" data-area="orders" onclick="switchTab('orders')">הזמנות</button>
             <button class="tab" data-area="products" onclick="switchTab('products')">מוצרים</button>
             <button class="tab" data-area="stock" onclick="switchTab('stock')">מלאי</button>
+            <button class="tab" data-area="receiving" onclick="switchTab('receiving')">קליטה</button>
             <button class="tab" data-area="users" onclick="switchTab('users')">משתמשים</button>
             <button class="tab" data-area="communications" onclick="switchTab('communications')">תקשורת לקוחות</button>
             <button class="tab" data-area="settings" onclick="switchTab('settings')">הגדרות</button>
@@ -601,6 +602,45 @@
             </div>
             <div id="commLoading" class="loading">טוען...</div>
             <div id="commContent"></div>
+        </div>
+
+        <!-- Receiving + Serials Section -->
+        <div id="receivingSection" class="section">
+            <h2>קליטה ומאגר סריאלים</h2>
+            <button class="btn btn-primary" onclick="toggleReceivingAdd()" style="margin-bottom:14px;">➕ קליטה חדשה</button>
+            <form id="receivingAddForm" onsubmit="addReceiving(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
+                <div class="form-row">
+                    <div class="form-group"><label>תאריך</label><input type="date" id="rcDate"></div>
+                    <div class="form-group"><label>ספק</label><input type="text" id="rcSupplier"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>מוצר קיים</label><select id="rcProductId"><option value="">— בחר / חדש —</option></select></div>
+                    <div class="form-group"><label>או מוצר חדש (שם)</label><input type="text" id="rcNewProduct" placeholder="ייווצר כטיוטה"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>כמות שהוזמנה</label><input type="number" id="rcQtyDeclared"></div>
+                    <div class="form-group"><label>כמות שנקלטה (תיכנס למחסן)</label><input type="number" id="rcQtyReceived"></div>
+                </div>
+                <div class="form-group"><label>אסמכתא/מק"ט משלוח</label><input type="text" id="rcShipment"></div>
+                <div class="form-group"><label>הערות</label><textarea id="rcNotes" rows="2"></textarea></div>
+                <div><button type="submit" class="btn btn-primary">שמור קליטה</button> <button type="button" class="btn" onclick="toggleReceivingAdd()">ביטול</button></div>
+            </form>
+            <div id="receivingLoading" class="loading">טוען...</div>
+            <div id="receivingContent"></div>
+
+            <h3 style="margin-top:30px;">מאגר סריאלים</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                <input type="text" id="serialSearch" placeholder="חיפוש סריאלי/דגם..." oninput="loadSerials()" style="flex:1; min-width:160px;">
+                <button class="btn" onclick="toggleManualSerial()">➕ סריאלי ידני</button>
+            </div>
+            <form id="manualSerialForm" onsubmit="addManualSerial(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:16px; border:1px solid #CFD7F0;">
+                <div class="form-row">
+                    <div class="form-group"><label>מספר סידורי</label><input type="text" id="msSerial" required></div>
+                    <div class="form-group"><label>דגם</label><input type="text" id="msModel"></div>
+                </div>
+                <div><button type="submit" class="btn btn-primary">הוסף</button> <button type="button" class="btn" onclick="toggleManualSerial()">ביטול</button></div>
+            </form>
+            <div id="serialsContent"></div>
         </div>
 
         <!-- Product Modal -->
@@ -868,6 +908,7 @@
             else if (tab === 'waitlist') loadWaitlist();
             else if (tab === 'admin_users') loadAdminUsers();
             else if (tab === 'communications') loadCommunications();
+            else if (tab === 'receiving') loadReceiving();
             else if (tab === 'settings') {
                 if (typeof renderCategoriesList === 'function') renderCategoriesList();
                 if (typeof renderProductTypesList === 'function') renderProductTypesList();
@@ -990,6 +1031,148 @@
                 if (!res.ok) { const dd=await res.json().catch(()=>({})); showMessage(dd.error||'שגיאה','error'); return; }
                 loadCommunications();
             } catch (err) { showMessage('שגיאה','error'); }
+        }
+
+        // ===== קליטה + מאגר סריאלים =====
+        let receivingData = [], expandedReceivingId = null, serialsData = [];
+        function toggleReceivingAdd(){ const f=document.getElementById('receivingAddForm'); f.style.display=f.style.display==='none'?'block':'none'; }
+        function toggleManualSerial(){ const f=document.getElementById('manualSerialForm'); f.style.display=f.style.display==='none'?'block':'none'; }
+        async function loadReceiving(){
+            const token=localStorage.getItem('adminToken');
+            try {
+                const prods=await fetch(`${API_URL}/api/admin/all-products`, {headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.json());
+                const sel=document.getElementById('rcProductId');
+                if(sel && Array.isArray(prods)) sel.innerHTML='<option value="">— בחר / חדש —</option>'+prods.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+            } catch(e){}
+            const loading=document.getElementById('receivingLoading'), content=document.getElementById('receivingContent');
+            loading.style.display='block'; content.innerHTML='';
+            try {
+                const res=await fetch(`${API_URL}/api/admin/receiving`, {headers:{'Authorization':`Bearer ${token}`}});
+                receivingData=await res.json(); loading.style.display='none';
+                if(!Array.isArray(receivingData)){content.innerHTML='<p style="color:#e74c3c;">אין הרשאה</p>';return;}
+                renderReceiving();
+            } catch(e){ loading.innerHTML='שגיאה'; }
+            loadSerials();
+        }
+        function renderReceiving(){
+            const content=document.getElementById('receivingContent');
+            if(!receivingData.length){content.innerHTML='<p class="empty-state">אין קליטות</p>';return;}
+            let h='<div class="table-container"><table><tr><th></th><th>תאריך</th><th>ספק</th><th>דגם</th><th>נקלט</th><th>סריאלים</th></tr>';
+            receivingData.forEach(rc=>{
+                const open=expandedReceivingId===rc.id;
+                h+=`<tr style="cursor:pointer;" onclick="toggleReceivingExpand(${rc.id})">
+                    <td>${open?'▲':'▼'}</td>
+                    <td>${rc.receiving_date?new Date(rc.receiving_date).toLocaleDateString('he-IL'):'-'}</td>
+                    <td>${escapeHtml(rc.supplier_name||'-')}</td>
+                    <td>${escapeHtml(rc.model||'-')}</td>
+                    <td>${rc.quantity_received??'-'}</td>
+                    <td>${rc.serials_count||0}</td></tr>`;
+                if(open){
+                    h+=`<tr><td colspan="6" style="background:#f8f9fa; padding:10px 14px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
+                            <div><span style="color:#888;">אסמכתא: </span>${escapeHtml(rc.shipment_ref||'-')}</div>
+                            <div><span style="color:#888;">הוזמן: </span>${rc.quantity_declared??'-'}</div>
+                            <div><span style="color:#888;">סטטוס: </span>${escapeHtml(rc.status||'-')}</div>
+                            <div><span style="color:#888;">נקלט ע"י: </span>${escapeHtml(rc.handled_by_name||'-')}</div>
+                        </div>
+                        ${rc.notes?`<div style="margin-top:6px;"><span style="color:#888;">הערות: </span>${escapeHtml(rc.notes)}</div>`:''}
+                        <div style="margin-top:10px; background:#fff; padding:10px; border-radius:6px;">
+                            <strong>הוספת סריאלים לקליטה זו:</strong>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; align-items:flex-end;">
+                                <div class="form-group" style="margin:0;"><label>מ‑</label><input type="number" id="rs_from_${rc.id}" style="width:120px;"></div>
+                                <div class="form-group" style="margin:0;"><label>עד</label><input type="number" id="rs_to_${rc.id}" style="width:120px;"></div>
+                                <span style="align-self:center;">או</span>
+                                <div class="form-group" style="margin:0; flex:1;"><label>רשימה (פסיק/רווח)</label><input type="text" id="rs_list_${rc.id}"></div>
+                                <button class="btn btn-primary" onclick="event.stopPropagation();addReceivingSerials(${rc.id})">הוסף</button>
+                            </div>
+                        </div>
+                        <div style="margin-top:10px;"><button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
+                }
+            });
+            h+='</table></div>'; content.innerHTML=h;
+        }
+        function toggleReceivingExpand(id){ expandedReceivingId=expandedReceivingId===id?null:id; renderReceiving(); }
+        async function addReceiving(e){
+            e.preventDefault(); const token=localStorage.getItem('adminToken');
+            const body={
+                receiving_date:document.getElementById('rcDate').value||null,
+                supplier_name:document.getElementById('rcSupplier').value.trim(),
+                product_id:document.getElementById('rcProductId').value||null,
+                new_product_name:document.getElementById('rcNewProduct').value.trim(),
+                quantity_declared:document.getElementById('rcQtyDeclared').value||null,
+                quantity_received:document.getElementById('rcQtyReceived').value||null,
+                shipment_ref:document.getElementById('rcShipment').value.trim(),
+                notes:document.getElementById('rcNotes').value.trim()
+            };
+            try {
+                const res=await fetch(`${API_URL}/api/admin/receiving`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+                if(!res.ok){const d=await res.json().catch(()=>({}));showMessage(d.error||'שגיאה','error');return;}
+                e.target.reset(); document.getElementById('receivingAddForm').style.display='none';
+                showMessage('קליטה נשמרה','success'); loadReceiving();
+            } catch(err){ showMessage('שגיאה ביצירה','error'); }
+        }
+        async function addReceivingSerials(id){
+            const token=localStorage.getItem('adminToken');
+            const from=document.getElementById('rs_from_'+id).value, to=document.getElementById('rs_to_'+id).value, list=document.getElementById('rs_list_'+id).value;
+            try {
+                const res=await fetch(`${API_URL}/api/admin/receiving/${id}/serials`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({from,to,list})});
+                const d=await res.json(); if(!res.ok){showMessage(d.error||'שגיאה','error');return;}
+                showMessage(`נוספו ${d.added}, דולגו ${d.skipped}`,'success'); loadReceiving();
+            } catch(err){ showMessage('שגיאה','error'); }
+        }
+        async function deleteReceiving(id){
+            if(!confirm('למחוק קליטה זו? יימחקו הסריאלים שנקלטו וירד מלאי המחסן.'))return;
+            const token=localStorage.getItem('adminToken');
+            try {
+                const res=await fetch(`${API_URL}/api/admin/receiving/${id}`, {method:'DELETE',headers:{'Authorization':`Bearer ${token}`}});
+                const d=await res.json(); if(!res.ok){showMessage(d.error||'שגיאה','error');return;}
+                showMessage('נמחק','success'); loadReceiving();
+            } catch(err){ showMessage('שגיאה','error'); }
+        }
+        async function loadSerials(){
+            const token=localStorage.getItem('adminToken');
+            const se=document.getElementById('serialSearch'); const q=se?se.value.trim():'';
+            const content=document.getElementById('serialsContent'); if(!content)return;
+            try {
+                const res=await fetch(`${API_URL}/api/admin/serials?q=${encodeURIComponent(q)}`, {headers:{'Authorization':`Bearer ${token}`}});
+                const data=await res.json(); serialsData=data.serials||[];
+                if(!serialsData.length){content.innerHTML='<p class="empty-state">אין סריאלים</p>';return;}
+                let h=`<p style="color:#888;">סה"כ במאגר: ${data.total}</p><div class="table-container"><table><tr><th>סריאלי</th><th>דגם</th><th>סטטוס</th><th>פעולות</th></tr>`;
+                serialsData.forEach(s=>{
+                    h+=`<tr><td>${escapeHtml(s.serial_number)}</td><td>${escapeHtml(s.model||'-')}</td><td>${escapeHtml(s.status||'')}</td>
+                        <td><button class="btn btn-delete" style="padding:4px 10px;" onclick="deleteSerial(${s.id})">מחק</button></td></tr>`;
+                });
+                h+='</table></div>'; content.innerHTML=h;
+            } catch(err){ content.innerHTML='<p style="color:#e74c3c;">שגיאה</p>'; }
+        }
+        async function addManualSerial(e){
+            e.preventDefault(); const token=localStorage.getItem('adminToken');
+            const body={serial_number:document.getElementById('msSerial').value.trim(), model:document.getElementById('msModel').value.trim()};
+            try {
+                const res=await fetch(`${API_URL}/api/admin/serials/manual`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(body)});
+                const d=await res.json(); if(!res.ok){showMessage(d.error||'שגיאה','error');return;}
+                e.target.reset(); document.getElementById('manualSerialForm').style.display='none';
+                showMessage('נוסף','success'); loadSerials();
+            } catch(err){ showMessage('שגיאה','error'); }
+        }
+        async function deleteSerial(id){
+            if(!confirm('למחוק סריאלי זה?'))return;
+            const token=localStorage.getItem('adminToken');
+            try {
+                const res=await fetch(`${API_URL}/api/admin/serials/${id}`, {method:'DELETE',headers:{'Authorization':`Bearer ${token}`}});
+                const d=await res.json(); if(!res.ok){showMessage(d.error||'שגיאה','error');return;}
+                loadSerials();
+            } catch(err){ showMessage('שגיאה','error'); }
+        }
+        async function assignWarrantySerial(id){
+            const el=document.getElementById('wa_assignserial_'+id); const sn=el?el.value.trim():'';
+            if(!sn){showMessage('הזן מספר סריאלי','error');return;}
+            const token=localStorage.getItem('adminToken');
+            try {
+                const res=await fetch(`${API_URL}/api/admin/warranty/${id}/assign-serial`, {method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({serial_number:sn})});
+                const d=await res.json(); if(!res.ok){showMessage(d.error||'שגיאה','error');return;}
+                showMessage('סריאלי שויך','success'); editingWarrantyId=null; loadWarranties();
+            } catch(err){ showMessage('שגיאה','error'); }
         }
 
         // ===== ניהול משתמשי ניהול =====
@@ -1248,6 +1431,7 @@
                 <div class="form-group"><label>משתמש משויך</label><select id="wa_user_${w.id}">${userOpts}</select></div></div>
                 <div class="form-row"><div class="form-group"><label>תאריך רכישה</label><input type="date" id="wa_pd_${w.id}" value="${pd}"></div>
                 <div class="form-group"><label>תוקף</label><input type="date" id="wa_ed_${w.id}" value="${ed}"></div></div>
+                <div class="form-group"><label>שיוך סריאלי מהמאגר</label><div style="display:flex;gap:8px;"><input type="text" id="wa_assignserial_${w.id}" placeholder="מספר סידורי שקיים במאגר" style="flex:1;"><button type="button" class="btn btn-primary" onclick="assignWarrantySerial(${w.id})">שייך</button></div></div>
                 <div><button class="btn btn-success" onclick="saveWarrantyInline(${w.id})">שמור</button> <button class="btn" onclick="cancelEditWarranty()">בטל</button></div></div>`;
         }
         function toggleWarrantyExpand(id){ if(editingWarrantyId===id) return; editingWarrantyId=null; expandedWarrantyId = expandedWarrantyId===id ? null : id; renderWarranties(displayedWarranties); }
