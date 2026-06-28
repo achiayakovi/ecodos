@@ -406,6 +406,14 @@
                     <option value="pending">נשלח · טרם הגיב</option>
                     <option value="notsent">לא נשלח</option>
                 </select>
+                <select id="statusFilter" onchange="renderOrders()" title="סינון לפי סטטוס">
+                    <option value="all">כל הסטטוסים</option>
+                    <option value="pending">ממתין</option>
+                    <option value="preparing">הכנת הזמנה</option>
+                    <option value="dispatched">נשלח / מוכן לאיסוף</option>
+                    <option value="completed">הושלם</option>
+                    <option value="cancelled">בוטל</option>
+                </select>
                 <button class="btn btn-primary" onclick="toggleManualOrder()">➕ הזמנה ידנית</button>
             </div>
             <form id="manualOrderForm" onsubmit="createManualOrder(event)" style="display:none;background:#fafbfc;padding:16px;border-radius:8px;margin-bottom:18px;border:1px solid #CFD7F0;">
@@ -2430,7 +2438,12 @@
             const content=document.getElementById('ordersContent');
             if(!Array.isArray(ordersData)||!ordersData.length){content.innerHTML='<p class="empty-state">אין הזמנות</p>';return;}
             const sf=(document.getElementById('surveyFilter')||{}).value||'all';
-            const rows=ordersData.filter(o=>{ if(sf==='all')return true; return [surveyStageState(o,'purchase'),surveyStageState(o,'day30')].includes(sf); });
+            const stf=(document.getElementById('statusFilter')||{}).value||'all';
+            const rows=ordersData.filter(o=>{
+                if(stf!=='all' && o.status!==stf) return false;
+                if(sf==='all') return true;
+                return [surveyStageState(o,'purchase'),surveyStageState(o,'day30')].includes(sf);
+            });
             if(!rows.length){content.innerHTML='<p class="empty-state">אין הזמנות תואמות</p>';return;}
             let h='<div class="table-container"><table><thead><tr><th></th><th>מספר</th><th>לקוח</th><th>סכום</th><th>סטטוס</th><th>סקר</th><th>תאריך</th></tr></thead><tbody>';
             rows.forEach(o=>{
