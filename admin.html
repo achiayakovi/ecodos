@@ -263,6 +263,15 @@
             background: #CFD7F0;
             color: #1A2332;
         }
+        /* שדות בתוך מודאלים (עריכת הזמנה וכו') — שיתאימו לעיצוב */
+        .modal select, .modal input[type="number"], .modal input[type="text"], .modal textarea {
+            padding: 10px; border: 1px solid #2A3348; border-radius: 8px;
+            font-family: inherit; font-size: 1rem; background: #CFD7F0; color: #1A2332;
+        }
+        .ed-delivery-opts { display:inline-flex; gap:8px; margin-top:6px; }
+        .ed-delivery-opt { padding:8px 18px; border:2px solid #CFD7F0; border-radius:8px; background:#fff; cursor:pointer; font-weight:600; color:#1A2332; transition:all .15s; }
+        .ed-delivery-opt input { display:none; }
+        .ed-delivery-opt.sel { border-color:#2440B0; background:#2440B0; color:#fff; }
         
         /* Messages */
         .message {
@@ -963,9 +972,11 @@
                     <button class="btn" onclick="addEditItem()">+ הוסף מוצר</button>
                 </div>
                 <div style="margin-bottom:14px;">
-                    <strong>אופן קבלה:</strong>
-                    <label style="margin-right:10px;"><input type="radio" name="editDelivery" value="משלוח"> משלוח</label>
-                    <label style="margin-right:10px;"><input type="radio" name="editDelivery" value="איסוף"> איסוף</label>
+                    <strong style="display:block; margin-bottom:6px;">אופן קבלה:</strong>
+                    <div class="ed-delivery-opts">
+                        <label class="ed-delivery-opt"><input type="radio" name="editDelivery" value="משלוח" onchange="syncEditDelivery()"> 🚚 משלוח</label>
+                        <label class="ed-delivery-opt"><input type="radio" name="editDelivery" value="איסוף" onchange="syncEditDelivery()"> 🏬 איסוף</label>
+                    </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; padding-top:12px;">
                     <strong style="font-size:17px;">סה"כ: ₪<span id="editTotal">0</span></strong>
@@ -2631,6 +2642,7 @@
                 document.getElementById('editProductSel').innerHTML = editProductsList.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} — ₪${p.sale_price||p.price} (מלאי ${p.stock_quantity})</option>`).join('');
                 const dm = order.delivery_method==='איסוף'?'איסוף':'משלוח';
                 document.querySelectorAll('input[name="editDelivery"]').forEach(r=>r.checked=(r.value===dm));
+                syncEditDelivery();
                 renderEditItems();
                 document.getElementById('editOrderModal').classList.add('active');
             }catch(err){ showMessage('שגיאה בטעינת ההזמנה','error'); }
@@ -2660,6 +2672,7 @@
             else editItems.push({ product_id: pid, quantity: qty, name: p.name, price: parseFloat(p.sale_price||p.price) });
             renderEditItems();
         }
+        function syncEditDelivery(){ document.querySelectorAll('.ed-delivery-opt').forEach(l=>{ const i=l.querySelector('input'); if(i) l.classList.toggle('sel', i.checked); }); }
         function closeEditOrder(){ document.getElementById('editOrderModal').classList.remove('active'); editOrderId=null; editItems=[]; }
         async function saveEditOrder(){
             if(!editItems.length){ showMessage('הזמנה חייבת לכלול לפחות מוצר אחד','error'); return; }
