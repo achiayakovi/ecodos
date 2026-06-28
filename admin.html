@@ -383,6 +383,25 @@
         <!-- Orders Section -->
         <div id="ordersSection" class="section">
             <h2>ניהול הזמנות</h2>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+                <input type="text" id="orderSearch" placeholder="חיפוש לפי שם/טלפון/אימייל/מספר הזמנה..." oninput="searchOrders()" style="flex:1;min-width:200px;">
+                <button class="btn btn-primary" onclick="toggleManualOrder()">➕ הזמנה ידנית</button>
+            </div>
+            <form id="manualOrderForm" onsubmit="createManualOrder(event)" style="display:none;background:#fafbfc;padding:16px;border-radius:8px;margin-bottom:18px;border:1px solid #CFD7F0;">
+                <div class="form-row">
+                    <div class="form-group"><label>לקוח רשום (אופציונלי)</label><select id="mo_user"><option value="">— אורח —</option></select></div>
+                    <div class="form-group"><label>כתובת למשלוח</label><input type="text" id="mo_address"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>שם אורח</label><input type="text" id="mo_gname"></div>
+                    <div class="form-group"><label>טלפון אורח</label><input type="text" id="mo_gphone"></div>
+                </div>
+                <div class="form-group"><label>אימייל אורח</label><input type="text" id="mo_gemail"></div>
+                <div style="margin:8px 0;"><strong>פריטים:</strong></div>
+                <div id="mo_items"></div>
+                <button type="button" class="btn" onclick="addManualItem()" style="margin-bottom:10px;">+ הוסף פריט</button>
+                <div><button type="submit" class="btn btn-primary">צור הזמנה</button> <button type="button" class="btn" onclick="toggleManualOrder()">ביטול</button></div>
+            </form>
             <div id="ordersLoading" class="loading">טוען...</div>
             <div id="ordersContent"></div>
         </div>
@@ -595,7 +614,11 @@
             <form id="commAddForm" onsubmit="addCommunication(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
                 <div class="form-row">
                     <div class="form-group"><label>תאריך</label><input type="date" id="commDate"></div>
-                    <div class="form-group"><label>סוג</label><select id="commType"><option value="שיחה">שיחה</option><option value="מייל">מייל</option><option value="תלונה">תלונה</option><option value="בקשה">בקשה</option></select></div>
+                    <div class="form-group"><label>סוג</label><select id="commType"><option value="שיחה">שיחה</option><option value="מייל">מייל</option><option value="תלונה">תלונה</option><option value="בקשה">בקשה</option><option value="משוב">משוב</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>ציון (למשוב 1-5)</label><input type="number" id="commScore" min="1" max="5"></div>
+                    <div class="form-group"><label>נושא (למשוב)</label><select id="commTopic"><option value="">—</option><option>שירות</option><option>מהירות הגעת המוצר</option><option>קלות ההזמנה</option><option>איכות המוצר</option></select></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>שם לקוח</label><input type="text" id="commName"></div>
@@ -995,7 +1018,9 @@
             const sel = (id, val, opts) => `<select id="${id}">${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
             return `<div style="padding:16px; background:#fafbfc;">
                 <div class="form-row"><div class="form-group"><label>תאריך</label><input type="date" id="ec_date_${c.id}" value="${d}"></div>
-                <div class="form-group"><label>סוג</label>${sel('ec_type_'+c.id, c.type, ['שיחה','מייל','תלונה','בקשה'])}</div></div>
+                <div class="form-group"><label>סוג</label>${sel('ec_type_'+c.id, c.type, ['שיחה','מייל','תלונה','בקשה','משוב'])}</div></div>
+                <div class="form-row"><div class="form-group"><label>ציון (למשוב 1-5)</label><input type="number" id="ec_score_${c.id}" min="1" max="5" value="${c.score||''}"></div>
+                <div class="form-group"><label>נושא (למשוב)</label>${sel('ec_topic_'+c.id, c.feedback_topic||'', ['','שירות','מהירות הגעת המוצר','קלות ההזמנה','איכות המוצר'])}</div></div>
                 <div class="form-row"><div class="form-group"><label>שם לקוח</label><input type="text" id="ec_name_${c.id}" value="${escapeHtml(c.customer_name||'')}"></div>
                 <div class="form-group"><label>טלפון</label><input type="text" id="ec_phone_${c.id}" value="${escapeHtml(c.customer_phone||'')}"></div></div>
                 <div class="form-row"><div class="form-group"><label>סריאלי</label><input type="text" id="ec_serial_${c.id}" value="${escapeHtml(c.serial_number||'')}"></div>
@@ -1022,7 +1047,9 @@
                 description: document.getElementById('commDescription').value.trim(),
                 initial_response: document.getElementById('commInitial').value.trim(),
                 resolution: document.getElementById('commResolution').value.trim(),
-                status: document.getElementById('commStatus').value
+                status: document.getElementById('commStatus').value,
+                score: document.getElementById('commScore').value || null,
+                feedback_topic: document.getElementById('commTopic').value || null
             };
             try {
                 const res = await fetch(`${API_URL}/api/admin/communications`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(body) });
@@ -1040,7 +1067,8 @@
                 customer_name: g('ec_name_').trim(), customer_phone: g('ec_phone_').trim(),
                 serial_number: g('ec_serial_').trim(), classification: g('ec_class_').trim(),
                 description: g('ec_desc_').trim(), initial_response: g('ec_init_').trim(),
-                resolution: g('ec_res_').trim(), status: g('ec_status_')
+                resolution: g('ec_res_').trim(), status: g('ec_status_'),
+                score: g('ec_score_')||null, feedback_topic: g('ec_topic_')||null
             };
             try {
                 const res = await fetch(`${API_URL}/api/admin/communications/${id}`, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(body) });
@@ -1220,11 +1248,16 @@
                 let h='<div class="table-container"><table><tr><th>קובץ</th><th>גודל</th><th>תאריך</th><th>פעולות</th></tr>';
                 list.forEach(b=>{
                     h+=`<tr><td>${escapeHtml(b.name)}</td><td>${(b.size/1024).toFixed(1)} KB</td><td>${new Date(b.mtime).toLocaleString('he-IL')}</td>
-                        <td style="display:flex;gap:6px;"><button class="btn btn-edit" style="padding:4px 10px;" onclick="restoreBackup('${escapeJsAttr(b.name)}')">שחזר</button>
+                        <td style="display:flex;gap:6px;"><button class="btn btn-primary" style="padding:4px 10px;" onclick="downloadBackup('${escapeJsAttr(b.name)}')">הורד</button>
+                        <button class="btn btn-edit" style="padding:4px 10px;" onclick="restoreBackup('${escapeJsAttr(b.name)}')">שחזר</button>
                         <button class="btn btn-delete" style="padding:4px 10px;" onclick="deleteBackup('${escapeJsAttr(b.name)}')">מחק</button></td></tr>`;
                 });
                 h+='</table></div>'; content.innerHTML=h;
             } catch(e){ loading.innerHTML='שגיאה'; }
+        }
+        async function downloadBackup(name){
+            const t=localStorage.getItem('adminToken');
+            try{ const r=await fetch(`${API_URL}/api/admin/backups/${encodeURIComponent(name)}`,{headers:{'Authorization':`Bearer ${t}`}}); if(!r.ok)throw new Error('שגיאה'); const blob=await r.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); }catch(e){ showMessage('שגיאה בהורדה','error'); }
         }
         async function backupNow(){
             const token=localStorage.getItem('adminToken');
@@ -1943,6 +1976,7 @@
                             <div><span style="color:#888;">כתובת: </span>${escapeHtml(o.shipping_address||'-')}</div>
                             <div><span style="color:#888;">תשלום: </span>${escapeHtml(o.payment_status||'-')}</div>
                             <div><span style="color:#888;">סוג: </span>${o.user_id?'לקוח רשום':'אורח'}</div>
+                            <div><span style="color:#888;">סריאלים משויכים: </span><span id="as_count_${o.id}">…</span></div>
                         </div>
                         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
                             <button class="btn btn-primary" onclick="event.stopPropagation();viewOrder(${o.id})">צפה במוצרים</button>
@@ -1965,8 +1999,39 @@
             });
             h+='</table></div>'; content.innerHTML=h;
         }
-        function toggleOrderExpand(id){ expandedOrderId=expandedOrderId===id?null:id; renderOrders(); }
+        function toggleOrderExpand(id){ expandedOrderId=expandedOrderId===id?null:id; renderOrders(); if(expandedOrderId===id) loadAssignedSerials(id); }
+        async function loadAssignedSerials(id){
+            const el=document.getElementById('as_count_'+id); if(!el)return;
+            const t=localStorage.getItem('adminToken');
+            try{ const r=await fetch(`${API_URL}/api/admin/orders/${id}/assigned-serials`,{headers:{'Authorization':`Bearer ${t}`}}); const d=await r.json(); el.textContent=r.ok?(d.count||0):'-'; }catch(e){ el.textContent='-'; }
+        }
         function toggleOrderAssign(id){ const el=document.getElementById('order_assign_'+id); el.style.display=el.style.display==='none'?'block':'none'; }
+        let moProducts=[];
+        function toggleManualOrder(){ const f=document.getElementById('manualOrderForm'); if(f.style.display==='none'){ f.style.display='block'; initManualOrder(); } else f.style.display='none'; }
+        async function initManualOrder(){
+            const t=localStorage.getItem('adminToken');
+            document.getElementById('mo_user').innerHTML='<option value="">— אורח —</option>'+(allUsers||[]).map(u=>`<option value="${u.id}">${escapeHtml(u.full_name)} (${escapeHtml(u.email)})</option>`).join('');
+            try{ moProducts=await fetch(`${API_URL}/api/admin/all-products`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json()); }catch(e){ moProducts=[]; }
+            document.getElementById('mo_items').innerHTML=''; addManualItem();
+        }
+        function addManualItem(){
+            const div=document.createElement('div'); div.className='form-row'; div.style.marginBottom='6px';
+            div.innerHTML=`<div class="form-group"><select class="mo-prod">${(moProducts||[]).map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (₪${p.sale_price||p.price})</option>`).join('')}</select></div><div class="form-group" style="max-width:120px;"><input type="number" class="mo-qty" value="1" min="1"></div>`;
+            document.getElementById('mo_items').appendChild(div);
+        }
+        async function createManualOrder(e){
+            e.preventDefault(); const t=localStorage.getItem('adminToken');
+            const items=Array.from(document.querySelectorAll('#mo_items .form-row')).map(r=>({product_id:parseInt(r.querySelector('.mo-prod').value),quantity:parseInt(r.querySelector('.mo-qty').value)||1})).filter(i=>i.product_id);
+            if(!items.length){ showMessage('הוסף לפחות פריט אחד','error'); return; }
+            const body={ user_id:document.getElementById('mo_user').value||null, guest_name:document.getElementById('mo_gname').value.trim(), guest_phone:document.getElementById('mo_gphone').value.trim(), guest_email:document.getElementById('mo_gemail').value.trim(), shipping_address:document.getElementById('mo_address').value.trim(), items };
+            try{ const r=await fetch(`${API_URL}/api/admin/orders/manual`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)}); const d=await r.json(); if(!r.ok)throw new Error(d.error); showMessage(`הזמנה #${d.id} נוצרה`,'success'); document.getElementById('manualOrderForm').style.display='none'; loadOrders(); }catch(err){ showMessage(err.message||'שגיאה','error'); }
+        }
+        async function searchOrders(){
+            const q=document.getElementById('orderSearch').value.trim();
+            if(!q){ loadOrders(); return; }
+            const t=localStorage.getItem('adminToken');
+            try{ const r=await fetch(`${API_URL}/api/admin/orders/search?q=${encodeURIComponent(q)}`,{headers:{'Authorization':`Bearer ${t}`}}); const d=await r.json(); if(Array.isArray(d)){ ordersData=d; renderOrders(); } }catch(e){}
+        }
         async function assignOrderUser(id){
             const uid=document.getElementById('oa_user_'+id).value||null; const t=localStorage.getItem('adminToken');
             try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/assign-user`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({user_id:uid})});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שויך','success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
