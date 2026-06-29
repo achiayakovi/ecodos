@@ -5,14 +5,29 @@
   var ACCENT = '#2440B0';
   var STORAGE_KEY = 'ecodosTermsAccepted_v1'; // העלאת הגרסה תכפה אישור מחדש
   var TERMS_URL = 'terms.html';
+  var LINK = '#2440B0'; // צבע קישורי הפוטר (פוטר בהיר)
 
   function currentFile() {
     var p = location.pathname;
     return p.substring(p.lastIndexOf('/') + 1) || 'index.html';
   }
 
+  // ---- עיצוב פוטר אחיד (מרכוז + מרווח + צבע visited קבוע) ----
+  function injectFooterStyle() {
+    if (document.getElementById('legal-style')) return;
+    var st = document.createElement('style');
+    st.id = 'legal-style';
+    st.textContent =
+      'footer{text-align:center;}' +
+      'footer .container>p{margin:0;}' +
+      'footer .footer-legal{margin-top:12px;font-size:.85rem;line-height:1.9;}' +
+      'footer .footer-legal a,footer .footer-legal a:visited{color:' + LINK + ';text-decoration:none;margin:0 7px;font-weight:500;}' +
+      'footer .footer-legal a:hover{text-decoration:underline;}';
+    document.head.appendChild(st);
+  }
   // ---- קישורי פוטר משפטיים ----
   function injectFooterLinks() {
+    injectFooterStyle();
     var footer = document.querySelector('footer .container') || document.querySelector('footer');
     if (!footer || footer.querySelector('.footer-legal')) return;
     var div = document.createElement('div');
