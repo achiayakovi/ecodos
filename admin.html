@@ -1448,7 +1448,7 @@
             receivingData.forEach(rc=>{
                 const open=expandedReceivingId===rc.id;
                 h+=`<tr style="cursor:pointer;" onclick="toggleReceivingExpand(${rc.id})">
-                    <td>${open?'▲':'▼'}</td>
+                    <td>${open?'▲':'▼'} <span style="color:#888;font-size:.85em;">#${rc.id}</span></td>
                     <td>${rc.receiving_date?new Date(rc.receiving_date).toLocaleDateString('he-IL'):'-'}</td>
                     <td>${escapeHtml(rc.supplier_name||'-')}</td>
                     <td>${escapeHtml(rc.model||'-')}</td>
