@@ -1401,7 +1401,8 @@
         function renderReceiving(){
             const content=document.getElementById('receivingContent');
             if(!receivingData.length){content.innerHTML='<p class="empty-state">אין קליטות</p>';return;}
-            const _t=receivingData.length, _c=receivingData.filter(r=>!(r.damage_notes&&String(r.damage_notes).trim())).length, _p=_t?Math.round(_c/_t*100):0;
+            const _rcOk=r=>!(r.damage_notes&&String(r.damage_notes).trim()) && !(r.quantity_declared!=null&&r.quantity_received!=null&&Number(r.quantity_received)!==Number(r.quantity_declared));
+            const _t=receivingData.length, _c=receivingData.filter(_rcOk).length, _p=_t?Math.round(_c/_t*100):0;
             let h=kpiRow([kpiCardHtml(_c+' / '+_t, _p+'% תקינות', 'קליטות תקינות')]) + '<div class="table-container"><table><tr><th></th><th>תאריך</th><th>ספק</th><th>דגם</th><th>נקלט</th><th>סריאלים</th></tr>';
             receivingData.forEach(rc=>{
                 const open=expandedReceivingId===rc.id;
