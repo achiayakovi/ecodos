@@ -1208,6 +1208,22 @@
         }
         function kpiCardHtml(big, sub, lbl){ return `<div class="kpi-card"><div class="kpi-big">${big}</div><div class="kpi-sub">${sub}</div><div class="kpi-lbl">${escapeHtml(lbl)}</div></div>`; }
         function kpiRow(cards){ return `<div class="kpi-row">${cards.join('')}</div>`; }
+        function versionsBtn(table, id){ return `<button class="btn" onclick="event.stopPropagation();showVersions('${table}',${id})">🕘 גרסאות</button>`; }
+        async function showVersions(table, id){
+            const t=localStorage.getItem('adminToken'); let rows=[];
+            try{const r=await fetch(`${API_URL}/api/admin/record-versions/${table}/${id}`,{headers:{'Authorization':`Bearer ${t}`}}); rows=await r.json();}catch(e){}
+            const body=(!Array.isArray(rows)||!rows.length)?'<p>אין גרסאות קודמות לרשומה זו.</p>':rows.map(v=>{
+                const dt=v.edited_at?new Date(v.edited_at).toLocaleString('he-IL'):'';
+                const data=v.data||{};
+                const items=Object.entries(data).filter(([k])=>!['created_at','updated_at','created_by','handled_by'].includes(k)).map(([k,val])=>`<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(val==null?'':(typeof val==='object'?JSON.stringify(val):String(val)))}</div>`).join('');
+                return `<div style="border:1px solid #e0e6ed;border-radius:8px;padding:10px;margin-bottom:10px;"><div style="font-weight:600;color:#2440B0;">גרסה ${v.version_no} · ${escapeHtml(dt)} · ${escapeHtml(v.edited_by_name||'')}</div><div style="margin-top:6px;font-size:.88rem;line-height:1.5;">${items}</div></div>`;
+            }).join('');
+            const ov=document.createElement('div'); ov.className='vov';
+            ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+            ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
+            ov.innerHTML=`<div dir="rtl" style="background:#fff;border-radius:12px;max-width:660px;width:92%;max-height:82vh;overflow:auto;padding:22px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><h3 style="margin:0;">🕘 היסטוריית גרסאות</h3><button class="btn" onclick="this.closest('.vov').remove()">✕</button></div>${body}</div>`;
+            document.body.appendChild(ov);
+        }
         function renderComm() {
             const content = document.getElementById('commContent');
             if (!commData.length) { content.innerHTML = '<p class="empty-state">אין רשומות</p>'; return; }
@@ -1236,7 +1252,7 @@
                         ${c.description ? `<div style="margin-top:6px;"><span style="color:#888;">תיאור: </span>${escapeHtml(c.description)}</div>` : ''}
                         ${c.initial_response ? `<div style="margin-top:4px;"><span style="color:#888;">מענה ראשוני: </span>${escapeHtml(c.initial_response)}</div>` : ''}
                         ${c.resolution ? `<div style="margin-top:4px;"><span style="color:#888;">פתרון: </span>${escapeHtml(c.resolution)}</div>` : ''}
-                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditComm(${c.id})">ערוך</button>
+                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditComm(${c.id})">ערוך</button> ${versionsBtn('communications',c.id)}
                         <button class="btn btn-delete" onclick="event.stopPropagation();deleteComm(${c.id})">מחק</button></div></td></tr>`;
                 }
             });
@@ -1450,7 +1466,7 @@
                                 <button class="btn btn-primary" onclick="event.stopPropagation();addReceivingSerials(${rc.id})">הוסף</button>
                             </div>
                         </div>
-                        <div style="margin-top:10px;"><button class="btn btn-edit" onclick="event.stopPropagation();startEditReceiving(${rc.id})">✏️ ערוך פרטים</button> <button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
+                        <div style="margin-top:10px;"><button class="btn btn-edit" onclick="event.stopPropagation();startEditReceiving(${rc.id})">✏️ ערוך פרטים</button> ${versionsBtn('receiving',rc.id)} <button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
                 }
             });
             h+='</table></div>'; content.innerHTML=h;
@@ -1615,7 +1631,7 @@
                         <td>${src}</td>
                         <td>${escapeHtml(s.status||'')}</td>
                         <td>${escapeHtml(s.created_by_name||'')}</td>
-                        <td><button class="btn btn-primary" onclick="editSerial(${s.id})">ערוך</button> <button class="btn btn-delete" onclick="deleteSerial(${s.id})">מחק</button></td></tr>`;
+                        <td><button class="btn btn-primary" onclick="editSerial(${s.id})">ערוך</button> ${versionsBtn('serials',s.id)} <button class="btn btn-delete" onclick="deleteSerial(${s.id})">מחק</button></td></tr>`;
                 }
             });
             h+='</table></div>'; content.innerHTML=h;
