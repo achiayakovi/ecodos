@@ -6,6 +6,7 @@
   var STORAGE_KEY = 'ecodosTermsAccepted_v1'; // העלאת הגרסה תכפה אישור מחדש
   var TERMS_URL = 'terms.html';
   var LINK = '#2440B0'; // צבע קישורי הפוטר (פוטר בהיר)
+  var COPYRIGHT = '<span dir="ltr">&copy; 2026 ECODOS</span> · כל הזכויות שמורות';
 
   function currentFile() {
     var p = location.pathname;
@@ -30,6 +31,8 @@
     injectFooterStyle();
     var footer = document.querySelector('footer .container') || document.querySelector('footer');
     if (!footer || footer.querySelector('.footer-legal')) return;
+    var cp = document.querySelector('footer .container > p') || document.querySelector('footer p');
+    if (cp) cp.innerHTML = COPYRIGHT;
     var div = document.createElement('div');
     div.className = 'footer-legal';
     div.innerHTML =
