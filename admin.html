@@ -695,6 +695,7 @@
             <h2>תקשורת לקוחות</h2>
             <button class="btn btn-primary" onclick="toggleCommAdd()" style="margin-bottom:14px;">➕ רשומה חדשה</button>
             <button class="btn" onclick="toggleSatStats()" style="margin-bottom:14px;">📊 שביעות רצון</button>
+            <button class="btn" onclick="exportCsv('communications')" style="margin-bottom:14px;">📥 ייצוא CSV</button>
             <div id="satStatsPanel" style="display:none;margin-bottom:16px;"></div>
             <form id="commAddForm" onsubmit="addCommunication(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
                 <div class="form-row">
@@ -751,6 +752,8 @@
         <div id="receivingSection" class="section">
             <h2>קליטה ומאגר סריאלים</h2>
             <button class="btn btn-primary" onclick="toggleReceivingAdd()" style="margin-bottom:14px;">➕ קליטה חדשה</button>
+            <button class="btn" onclick="exportCsv('receiving')" style="margin-bottom:14px;">📥 ייצוא קליטות</button>
+            <button class="btn" onclick="exportCsv('serials')" style="margin-bottom:14px;">📥 ייצוא סריאלים</button>
             <form id="receivingAddForm" onsubmit="addReceiving(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
                 <div class="form-group"><label>סוג קליטה</label>
                     <select id="rcType" onchange="onReceivingTypeChange()"><option value="ספק">ספק</option><option value="החזרה">החזרה מהזמנה</option></select>
@@ -1223,6 +1226,28 @@
         }
         function kpiCardHtml(big, sub, lbl){ return `<div class="kpi-card"><div class="kpi-big">${big}</div><div class="kpi-sub">${sub}</div><div class="kpi-lbl">${escapeHtml(lbl)}</div></div>`; }
         function kpiRow(cards){ return `<div class="kpi-row">${cards.join('')}</div>`; }
+        // ===== ייצוא רשומות (CSV מהשרת + PDF להדפסה) =====
+        async function exportCsv(table){
+            const token=localStorage.getItem('adminToken');
+            try{
+                const res=await fetch(`${API_URL}/api/admin/export/${table}`,{headers:{'Authorization':`Bearer ${token}`}});
+                if(!res.ok){ const d=await res.json().catch(()=>({})); showMessage(d.error||'שגיאה בייצוא','error'); return; }
+                const blob=await res.blob(); const url=URL.createObjectURL(blob);
+                const a=document.createElement('a'); a.href=url; a.download=`${table}-${new Date().toISOString().slice(0,10)}.csv`;
+                document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+            }catch(e){ showMessage('שגיאה בייצוא','error'); }
+        }
+        const PRINT_SKIP=['id','archived','created_by','handled_by','user_id','order_id','file_data','content_type','product_id','receiving_id','is_legacy'];
+        function printRecord(rec,title){
+            const rows=Object.entries(rec).filter(([k,v])=>!PRINT_SKIP.includes(k)&&v!=null&&v!=='').map(([k,v])=>{
+                let val=(v&&typeof v==='object')?Object.entries(v).map(([t,s])=>`${t}: ${s}`).join(' · '):((/date|_at$/.test(k))?new Date(v).toLocaleDateString('he-IL'):String(v));
+                return `<tr><th>${escapeHtml(FIELD_HE[k]||k)}</th><td>${escapeHtml(val)}</td></tr>`;
+            }).join('');
+            const w=window.open('','_blank','width=820,height=900');
+            if(!w){ showMessage('חלון ההדפסה נחסם — אפשר חלונות קופצים','error'); return; }
+            w.document.write(`<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#222}h1{font-size:20px;color:#2440B0;border-bottom:2px solid #2440B0;padding-bottom:8px;margin:0 0 6px}table{width:100%;border-collapse:collapse;margin-top:14px}th{text-align:right;background:#eef2fc;width:190px;padding:8px;border:1px solid #d5dded;vertical-align:top;font-weight:600}td{padding:8px;border:1px solid #d5dded}.meta{margin-top:18px;color:#888;font-size:12px}</style></head><body><h1>${escapeHtml(title)}</h1><table>${rows}</table><p class="meta">הופק: ${new Date().toLocaleString('he-IL')}</p><scr`+`ipt>window.onload=function(){window.print()}</scr`+`ipt></body></html>`);
+            w.document.close();
+        }
         function versionsBtn(table, id){ return `<button class="btn" onclick="event.stopPropagation();showVersions('${table}',${id})">🕘 גרסאות</button>`; }
         function restoreBtn(table, id){ return ` <button class="btn btn-success" onclick="event.stopPropagation();restoreRecord('${table}',${id})">↩ שחזר</button>`; }
         let SHOW_ARCHIVED=false;
@@ -1268,6 +1293,7 @@
             ov.innerHTML=`<div dir="rtl" style="background:#fff;border-radius:12px;max-width:660px;width:92%;max-height:82vh;overflow:auto;padding:22px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><h3 style="margin:0;">🕘 היסטוריית גרסאות</h3><button class="btn" onclick="this.closest('.vov').remove()">✕</button></div>${body}</div>`;
             document.body.appendChild(ov);
         }
+        function printComm(id){ const c=(commData||[]).find(x=>x.id===id); if(c) printRecord(c, 'תקשורת לקוחות — '+(c.customer_name||('#'+id))); }
         function fbDetailHtml(c) {
             const fs = c.feedback_scores;
             if (fs && typeof fs === 'object' && Object.keys(fs).length) return Object.entries(fs).map(([t,v])=>`${escapeHtml(t)} ★${v}`).join(' · ');
@@ -1304,6 +1330,7 @@
                         ${c.initial_response ? `<div style="margin-top:4px;"><span style="color:#888;">מענה ראשוני: </span>${escapeHtml(c.initial_response)}</div>` : ''}
                         ${c.resolution ? `<div style="margin-top:4px;"><span style="color:#888;">פתרון: </span>${escapeHtml(c.resolution)}</div>` : ''}
                         <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditComm(${c.id})">ערוך</button> ${versionsBtn('communications',c.id)}${c.archived?restoreBtn('communications',c.id):''}
+                        <button class="btn" onclick="event.stopPropagation();printComm(${c.id})">🖨️ PDF</button>
                         <button class="btn btn-delete" onclick="event.stopPropagation();deleteComm(${c.id})">מחק</button></div></td></tr>`;
                 }
             });
@@ -1534,11 +1561,12 @@
                                 <button class="btn btn-primary" onclick="event.stopPropagation();addReceivingSerials(${rc.id})">הוסף</button>
                             </div>
                         </div>
-                        <div style="margin-top:10px;"><button class="btn btn-edit" onclick="event.stopPropagation();startEditReceiving(${rc.id})">✏️ ערוך פרטים</button> ${versionsBtn('receiving',rc.id)} <button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
+                        <div style="margin-top:10px;"><button class="btn btn-edit" onclick="event.stopPropagation();startEditReceiving(${rc.id})">✏️ ערוך פרטים</button> ${versionsBtn('receiving',rc.id)} <button class="btn" onclick="event.stopPropagation();printReceiving(${rc.id})">🖨️ PDF</button> <button class="btn btn-delete" onclick="event.stopPropagation();deleteReceiving(${rc.id})">מחק קליטה</button></div></td></tr>`;
                 }
             });
             h+='</table></div>'; content.innerHTML=h;
         }
+        function printReceiving(id){ const r=(receivingData||[]).find(x=>x.id===id); if(r) printRecord(r, 'קליטה #'+id+' — '+(r.supplier_name||'')); }
         function toggleReceivingExpand(id){ expandedReceivingId=expandedReceivingId===id?null:id; if(editingReceivingId&&editingReceivingId!==expandedReceivingId) editingReceivingId=null; renderReceiving(); }
         function startEditReceiving(id){ editingReceivingId=id; expandedReceivingId=id; renderReceiving(); }
         function cancelEditReceiving(){ editingReceivingId=null; renderReceiving(); }
