@@ -724,14 +724,18 @@
                     <div class="form-group"><label>שם לקוח</label><input type="text" id="commName"></div>
                     <div class="form-group"><label>טלפון</label><input type="text" id="commPhone"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>מספר סריאלי</label><input type="text" id="commSerial"></div>
-                    <div class="form-group"><label>סיווג</label><input type="text" id="commClassification" placeholder="למשל: תקלה / שאלה"></div>
-                </div>
+                <div class="form-group"><label>מספר סריאלי</label><input type="text" id="commSerial"></div>
                 <div class="form-group"><label>תיאור הפנייה</label><textarea id="commDescription" rows="2"></textarea></div>
-                <div class="form-group"><label>מענה ראשוני</label><textarea id="commInitial" rows="2"></textarea></div>
-                <div class="form-group"><label>פתרון</label><textarea id="commResolution" rows="2"></textarea></div>
-                <div class="form-group"><label>סטטוס</label><select id="commStatus"><option value="פתוחה">פתוחה</option><option value="בטיפול">בטיפול</option><option value="סגורה">סגורה</option></select></div>
+
+                <!-- שדות תלונה (מוצגים רק כשהסוג=תלונה) -->
+                <div id="complaintFields" style="display:none; border-top:1px solid #e0e0e0; margin-top:6px; padding-top:12px;">
+                    <div class="form-row">
+                        <div class="form-group"><label>סיווג</label><input type="text" id="commClassification" placeholder="למשל: תקלה / שאלה"></div>
+                        <div class="form-group"><label>סטטוס</label><select id="commStatus"><option value="פתוחה">פתוחה</option><option value="בטיפול">בטיפול</option><option value="סגורה">סגורה</option></select></div>
+                    </div>
+                    <div class="form-group"><label>מענה ראשוני</label><textarea id="commInitial" rows="2"></textarea></div>
+                    <div class="form-group"><label>פתרון</label><textarea id="commResolution" rows="2"></textarea></div>
+                </div>
                 <div><button type="submit" class="btn btn-primary">שמור</button> <button type="button" class="btn" onclick="toggleCommAdd()">ביטול</button></div>
             </form>
             <div style="margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -1264,6 +1268,12 @@
             ov.innerHTML=`<div dir="rtl" style="background:#fff;border-radius:12px;max-width:660px;width:92%;max-height:82vh;overflow:auto;padding:22px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><h3 style="margin:0;">🕘 היסטוריית גרסאות</h3><button class="btn" onclick="this.closest('.vov').remove()">✕</button></div>${body}</div>`;
             document.body.appendChild(ov);
         }
+        function fbDetailHtml(c) {
+            const fs = c.feedback_scores;
+            if (fs && typeof fs === 'object' && Object.keys(fs).length) return Object.entries(fs).map(([t,v])=>`${escapeHtml(t)} ★${v}`).join(' · ');
+            if (c.feedback_topic) return `${escapeHtml(c.feedback_topic)} ★${c.score||'—'}`;
+            return c.score ? ('★'+c.score) : '—';
+        }
         function renderComm() {
             const content = document.getElementById('commContent');
             if (!commData.length) { content.innerHTML = '<p class="empty-state">אין רשומות</p>'; return; }
@@ -1290,6 +1300,7 @@
                             <div style="padding:3px 0;"><span style="color:#888;">טופל ע"י: </span>${escapeHtml(c.handled_by_name||'-')}</div>
                         </div>
                         ${c.description ? `<div style="margin-top:6px;"><span style="color:#888;">תיאור: </span>${escapeHtml(c.description)}</div>` : ''}
+                        ${c.type==='משוב' ? `<div style="margin-top:4px;">${c.survey_stage?`<span style="color:#888;">שלב: </span>${escapeHtml(c.survey_stage)} · `:''}<span style="color:#888;">דירוגים: </span>${fbDetailHtml(c)}</div>` : ''}
                         ${c.initial_response ? `<div style="margin-top:4px;"><span style="color:#888;">מענה ראשוני: </span>${escapeHtml(c.initial_response)}</div>` : ''}
                         ${c.resolution ? `<div style="margin-top:4px;"><span style="color:#888;">פתרון: </span>${escapeHtml(c.resolution)}</div>` : ''}
                         <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditComm(${c.id})">ערוך</button> ${versionsBtn('communications',c.id)}${c.archived?restoreBtn('communications',c.id):''}
@@ -1302,28 +1313,44 @@
         function commEditForm(c) {
             const d = c.comm_date ? String(c.comm_date).split('T')[0] : '';
             const sel = (id, val, opts) => `<select id="${id}">${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
+            const opt = (v, cur) => `<option value="${v}" ${cur===v?'selected':''}>${v}</option>`;
+            const isComplaint = c.type === 'תלונה';
             return `<div style="padding:16px; background:#fafbfc;">
-                <div class="form-row"><div class="form-group"><label>תאריך</label><input type="date" id="ec_date_${c.id}" value="${d}"></div>
-                <div class="form-group"><label>סוג</label>${sel('ec_type_'+c.id, c.type, ['שיחה','מייל','תלונה','בקשה','משוב'])}</div></div>
-                <div class="form-row"><div class="form-group"><label>ציון (למשוב 1-5)</label><input type="number" id="ec_score_${c.id}" min="1" max="5" value="${c.score||''}"></div>
-                <div class="form-group"><label>נושא (למשוב)</label>${sel('ec_topic_'+c.id, c.feedback_topic||'', ['','שירות','מהירות הגעת המוצר','קלות ההזמנה','איכות המוצר'])}</div></div>
+                <div class="form-row"><div class="form-group"><label>סוג</label><select id="ec_type_${c.id}" onchange="onEditCommType(${c.id})">${['שיחה','מכירה','תלונה','משוב','אחר'].map(v=>opt(v,c.type)).join('')}</select></div>
+                <div class="form-group"><label>תאריך</label><input type="date" id="ec_date_${c.id}" value="${d}"></div></div>
+                <div id="ec_feedback_${c.id}" style="display:${c.type==='משוב'?'block':'none'};">
+                    <div class="form-group"><label>שלב הסקר</label><select id="ec_stage_${c.id}">${['','רכישה','30 יום'].map(s=>`<option value="${s}" ${c.survey_stage===s?'selected':''}>${s||'— ללא —'}</option>`).join('')}</select></div>
+                    <div style="background:#eef; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-size:14px;">סולם הדירוג: <strong style="color:#c0392b;">1 = גרוע</strong> · <strong style="color:#27ae60;">5 = מצוין</strong></div>
+                    ${['שירות','מהירות הגעת המוצר','קלות ההזמנה'].map(topic=>{
+                        const fs=c.feedback_scores||{}; const cur=(fs[topic]!=null?fs[topic]:(c.feedback_topic===topic?c.score:''));
+                        return `<div class="fb-row" data-topic="${topic}"><span class="fb-lbl">${topic}</span><div class="fb-nums">${[1,2,3,4,5].map(v=>`<button type="button" class="fb-btn ${String(cur)===String(v)?'sel':''}" value="${v}" onclick="pickFb(this)">${v}</button>`).join('')}</div></div>`;
+                    }).join('')}
+                </div>
                 <div class="form-row"><div class="form-group"><label>שם לקוח</label><input type="text" id="ec_name_${c.id}" value="${escapeHtml(c.customer_name||'')}"></div>
                 <div class="form-group"><label>טלפון</label><input type="text" id="ec_phone_${c.id}" value="${escapeHtml(c.customer_phone||'')}"></div></div>
-                <div class="form-row"><div class="form-group"><label>סריאלי</label><input type="text" id="ec_serial_${c.id}" value="${escapeHtml(c.serial_number||'')}"></div>
-                <div class="form-group"><label>סיווג</label><input type="text" id="ec_class_${c.id}" value="${escapeHtml(c.classification||'')}"></div></div>
+                <div class="form-group"><label>סריאלי</label><input type="text" id="ec_serial_${c.id}" value="${escapeHtml(c.serial_number||'')}"></div>
                 <div class="form-group"><label>תיאור</label><textarea id="ec_desc_${c.id}" rows="2">${escapeHtml(c.description||'')}</textarea></div>
-                <div class="form-group"><label>מענה ראשוני</label><textarea id="ec_init_${c.id}" rows="2">${escapeHtml(c.initial_response||'')}</textarea></div>
-                <div class="form-group"><label>פתרון</label><textarea id="ec_res_${c.id}" rows="2">${escapeHtml(c.resolution||'')}</textarea></div>
-                <div class="form-group"><label>סטטוס</label>${sel('ec_status_'+c.id, c.status, ['פתוחה','בטיפול','סגורה'])}</div>
+                <div id="ec_complaint_${c.id}" style="display:${isComplaint?'block':'none'}; border-top:1px solid #e0e0e0; padding-top:12px;">
+                    <div class="form-row"><div class="form-group"><label>סיווג</label><input type="text" id="ec_class_${c.id}" value="${escapeHtml(c.classification||'')}"></div>
+                    <div class="form-group"><label>סטטוס</label>${sel('ec_status_'+c.id, c.status, ['פתוחה','בטיפול','סגורה'])}</div></div>
+                    <div class="form-group"><label>מענה ראשוני</label><textarea id="ec_init_${c.id}" rows="2">${escapeHtml(c.initial_response||'')}</textarea></div>
+                    <div class="form-group"><label>פתרון</label><textarea id="ec_res_${c.id}" rows="2">${escapeHtml(c.resolution||'')}</textarea></div>
+                </div>
                 <div><button class="btn btn-success" onclick="saveCommInline(${c.id})">שמור</button> <button class="btn" onclick="cancelEditComm()">בטל</button></div></div>`;
+        }
+        function onEditCommType(id){
+            const tp=document.getElementById('ec_type_'+id).value;
+            const cf=document.getElementById('ec_complaint_'+id); if(cf) cf.style.display=(tp==='תלונה')?'block':'none';
+            const fb=document.getElementById('ec_feedback_'+id); if(fb) fb.style.display=(tp==='משוב')?'block':'none';
         }
         function toggleCommExpand(id){ if(editingCommId===id) return; editingCommId=null; expandedCommId = expandedCommId===id ? null : id; renderComm(); }
         function startEditComm(id){ expandedCommId=id; editingCommId=id; renderComm(); }
         function cancelEditComm(){ editingCommId=null; renderComm(); }
-        // מציג שדות משוב כשסוג="משוב" (השדות העשירים יתווספו במשימה 10; כרגע מוגן)
+        // שדות דינמיים לפי סוג: משוב→דירוגים, תלונה→שדות תלונה
         function onCommTypeChange(){
-            const el=document.getElementById('feedbackFields');
-            if(el) el.style.display = (document.getElementById('commType').value==='משוב') ? 'block' : 'none';
+            const tp=document.getElementById('commType').value;
+            const fb=document.getElementById('feedbackFields'); if(fb) fb.style.display=(tp==='משוב')?'block':'none';
+            const cf=document.getElementById('complaintFields'); if(cf) cf.style.display=(tp==='תלונה')?'block':'none';
         }
         function pickFb(btn){ btn.parentElement.querySelectorAll('.fb-btn').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
         let custSearchTimer=null;
@@ -1393,7 +1420,8 @@
                 serial_number: g('ec_serial_').trim(), classification: g('ec_class_').trim(),
                 description: g('ec_desc_').trim(), initial_response: g('ec_init_').trim(),
                 resolution: g('ec_res_').trim(), status: g('ec_status_'),
-                score: g('ec_score_')||null, feedback_topic: g('ec_topic_')||null
+                feedback_scores: (function(){const o={};document.querySelectorAll('#ec_feedback_'+id+' .fb-row').forEach(r=>{const b=r.querySelector('.fb-btn.sel');if(b)o[r.dataset.topic]=parseInt(b.value,10);});return o;})(),
+                survey_stage: (document.getElementById('ec_stage_'+id)?document.getElementById('ec_stage_'+id).value:'')||null
             };
             try {
                 const res = await fetch(`${API_URL}/api/admin/communications/${id}`, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify(body) });
