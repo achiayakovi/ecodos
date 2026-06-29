@@ -380,6 +380,7 @@
             <button class="tab" data-area="products" onclick="switchTab('products')">מוצרים</button>
             <button class="tab" data-area="stock" onclick="switchTab('stock')">מלאי</button>
             <button class="tab" data-area="receiving" onclick="switchTab('receiving')">קליטה</button>
+            <button class="tab" data-area="purchasing" onclick="switchTab('purchasing')">הזמנות רכש</button>
             <button class="tab" data-area="users" onclick="switchTab('users')">משתמשים</button>
             <button class="tab" data-area="communications" onclick="switchTab('communications')">תקשורת לקוחות</button>
             <button class="tab" data-area="settings" onclick="switchTab('settings')">הגדרות</button>
@@ -828,6 +829,37 @@
             <div id="serialsContent"></div>
         </div>
 
+        <!-- Purchase Orders Section -->
+        <div id="purchasingSection" class="section">
+            <h2>הזמנות רכש</h2>
+            <button class="btn btn-primary" onclick="togglePOAdd()" style="margin-bottom:14px;">➕ הזמנה חדשה</button>
+            <button class="btn" onclick="exportCsv('purchase_orders')" style="margin-bottom:14px;">📥 ייצוא CSV</button>
+            <form id="poAddForm" onsubmit="addPO(event)" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
+                <div class="form-row">
+                    <div class="form-group"><label>ספק (שם — ייווצר אם חדש)</label>
+                        <input type="text" id="poSupplierName" list="poSupplierList" placeholder="הקלד שם ספק או בחר קיים" autocomplete="off">
+                        <datalist id="poSupplierList"></datalist></div>
+                    <div class="form-group"><label>תאריך הזמנה</label><input type="date" id="poDate"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>דגם</label><input type="text" id="poModel"></div>
+                    <div class="form-group"><label>כמות</label><input type="number" id="poQty" min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>תאריך אספקה</label><input type="date" id="poDelivery"></div>
+                    <div class="form-group"><label>טווח סריאלים</label><input type="text" id="poSerialRange" placeholder="למשל 1001-1200"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>סטטוס</label><select id="poStatus">
+                        <option value="טיוטה">טיוטה</option><option value="פתוחה">פתוחה</option><option value="סגורה">סגורה</option></select></div>
+                    <div class="form-group"><label>קובץ הזמנה (PDF/תמונה)</label><input type="file" id="poFile" accept="application/pdf,image/*"></div>
+                </div>
+                <div class="form-group"><label>הערות</label><textarea id="poNotes" rows="2"></textarea></div>
+                <div><button type="submit" class="btn btn-primary">שמור הזמנה</button> <button type="button" class="btn" onclick="togglePOAdd()">ביטול</button></div>
+            </form>
+            <div id="poContent"></div>
+        </div>
+
         <!-- Backups Section -->
         <div id="backupsSection" class="section">
             <h2>גיבויים</h2>
@@ -1156,6 +1188,7 @@
             else if (tab === 'admin_users') { loadAdminUsers(); loadActivityLog(); }
             else if (tab === 'communications') loadCommunications();
             else if (tab === 'receiving') loadReceiving();
+            else if (tab === 'purchasing') loadPurchaseOrders();
             else if (tab === 'backups') loadBackups();
             else if (tab === 'settings') {
                 if (typeof renderCategoriesList === 'function') renderCategoriesList();
@@ -1237,7 +1270,7 @@
                 document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
             }catch(e){ showMessage('שגיאה בייצוא','error'); }
         }
-        const PRINT_SKIP=['id','archived','created_by','handled_by','user_id','order_id','file_data','content_type','product_id','receiving_id','is_legacy'];
+        const PRINT_SKIP=['id','archived','created_by','handled_by','user_id','order_id','file_data','content_type','product_id','receiving_id','is_legacy','supplier_id','has_file'];
         function printRecord(rec,title){
             const rows=Object.entries(rec).filter(([k,v])=>!PRINT_SKIP.includes(k)&&v!=null&&v!=='').map(([k,v])=>{
                 let val=(v&&typeof v==='object')?Object.entries(v).map(([t,s])=>`${t}: ${s}`).join(' · '):((/date|_at$/.test(k))?new Date(v).toLocaleDateString('he-IL'):String(v));
@@ -1251,10 +1284,10 @@
         function versionsBtn(table, id){ return `<button class="btn" onclick="event.stopPropagation();showVersions('${table}',${id})">🕘 גרסאות</button>`; }
         function restoreBtn(table, id){ return ` <button class="btn btn-success" onclick="event.stopPropagation();restoreRecord('${table}',${id})">↩ שחזר</button>`; }
         let SHOW_ARCHIVED=false;
-        (function(){ const _f=window.fetch; window.fetch=function(u,o){ try{ if(SHOW_ARCHIVED && typeof u==='string' && /\/api\/admin\/communications(\?|$)/.test(u)){ u += (u.includes('?')?'&':'?')+'showArchived=1'; } }catch(e){} return _f.call(this,u,o); }; })();
+        (function(){ const _f=window.fetch; window.fetch=function(u,o){ try{ if(SHOW_ARCHIVED && typeof u==='string' && /\/api\/admin\/(communications|purchase-orders)(\?|$)/.test(u)){ u += (u.includes('?')?'&':'?')+'showArchived=1'; } }catch(e){} return _f.call(this,u,o); }; })();
         function toggleArchive(on){ SHOW_ARCHIVED=on; if(window.currentTab) switchTab(window.currentTab); }
-        const FIELD_HE={id:'מזהה',comm_date:'תאריך',type:'סוג',customer_name:'שם לקוח',customer_phone:'טלפון',serial_number:'מספר סריאלי',user_id:'משתמש',order_id:'הזמנה',description:'תיאור',classification:'סיווג',initial_response:'מענה ראשוני',resolution:'פתרון',status:'סטטוס',score:'ציון',feedback_topic:'נושא משוב',feedback_scores:'דירוגי משוב',survey_stage:'שלב סקר',receiving_date:'תאריך',supplier_name:'ספק',shipment_ref:'אסמכתת משלוח',model:'דגם',quantity_declared:'כמות מוצהרת',quantity_received:'כמות שהתקבלה',damage_notes:'נזק/ממצאים',sample_size:'גודל מדגם',sample_findings:'ממצאי מדגם',notes:'הערות',receiving_type:'סוג קליטה',product_id:'מוצר',receiving_id:'קליטה',is_legacy:'ישן',archived:'בארכיון'};
-        const ARCHIVE_MODULES=[['communications','תקשורת/תלונות']];
+        const FIELD_HE={id:'מזהה',comm_date:'תאריך',type:'סוג',customer_name:'שם לקוח',customer_phone:'טלפון',serial_number:'מספר סריאלי',user_id:'משתמש',order_id:'הזמנה',description:'תיאור',classification:'סיווג',initial_response:'מענה ראשוני',resolution:'פתרון',status:'סטטוס',score:'ציון',feedback_topic:'נושא משוב',feedback_scores:'דירוגי משוב',survey_stage:'שלב סקר',receiving_date:'תאריך',supplier_name:'ספק',shipment_ref:'אסמכתת משלוח',model:'דגם',quantity_declared:'כמות מוצהרת',quantity_received:'כמות שהתקבלה',damage_notes:'נזק/ממצאים',sample_size:'גודל מדגם',sample_findings:'ממצאי מדגם',notes:'הערות',receiving_type:'סוג קליטה',product_id:'מוצר',receiving_id:'קליטה',is_legacy:'ישן',archived:'בארכיון',supplier_id:'ספק',po_date:'תאריך הזמנה',delivery_date:'תאריך אספקה',serial_range:'טווח סריאלים',quantity:'כמות',file_name:'קובץ',name:'שם',contact_person:'איש קשר',phone:'טלפון',email:'אימייל'};
+        const ARCHIVE_MODULES=[['communications','תקשורת/תלונות'],['purchase_orders','הזמנות רכש']];
         function showArchivePicker(){
             const ov=document.createElement('div'); ov.className='vov';
             ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
@@ -1567,6 +1600,109 @@
             h+='</table></div>'; content.innerHTML=h;
         }
         function printReceiving(id){ const r=(receivingData||[]).find(x=>x.id===id); if(r) printRecord(r, 'קליטה #'+id+' — '+(r.supplier_name||'')); }
+
+        // ===== הזמנות רכש (PO) — ספק רזה inline =====
+        function fileToBase64(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result.split(',')[1]); r.onerror=reject; r.readAsDataURL(file); }); }
+        let poData=[], poSuppliers=[], expPO=null, edPO=null;
+        function togglePOAdd(){ const f=document.getElementById('poAddForm'); f.style.display=f.style.display==='none'?'block':'none'; }
+        async function loadPurchaseOrders(){
+            const t=localStorage.getItem('adminToken');
+            try{
+                const [pos,sups]=await Promise.all([
+                    fetch(`${API_URL}/api/admin/purchase-orders`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json()),
+                    fetch(`${API_URL}/api/admin/suppliers`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json())
+                ]);
+                poData=Array.isArray(pos)?pos:[]; poSuppliers=Array.isArray(sups)?sups:[];
+                const dl=document.getElementById('poSupplierList');
+                if(dl) dl.innerHTML=poSuppliers.map(s=>`<option value="${escapeHtml(s.name)}">`).join('');
+                renderPOs();
+            }catch(e){ document.getElementById('poContent').innerHTML='<p class="empty-state">שגיאה בטעינה</p>'; }
+        }
+        function poStatusBadge(s){ const c=s==='סגורה'?'#1e7e34':(s==='פתוחה'?'#2440B0':'#888'); return `<span style="color:${c};font-weight:600;">${escapeHtml(s||'')}</span>`; }
+        function renderPOs(){
+            const c=document.getElementById('poContent');
+            if(!poData.length){ c.innerHTML='<p class="empty-state">אין הזמנות רכש</p>'; return; }
+            const _open=poData.filter(p=>p.status&&p.status!=='סגורה').length;
+            let h=kpiRow([kpiCardHtml(String(poData.length), _open+' פתוחות', 'הזמנות רכש')]) + '<div class="table-container"><table><tr><th></th><th>תאריך</th><th>ספק</th><th>דגם</th><th>כמות</th><th>סטטוס</th></tr>';
+            poData.forEach(p=>{
+                if(edPO===p.id){ h+=`<tr><td colspan="6" style="padding:0;">${poEditForm(p)}</td></tr>`; return; }
+                const d=p.po_date?new Date(p.po_date).toLocaleDateString('he-IL'):'-';
+                const open=expPO===p.id;
+                h+=`<tr class="${p.archived?'qms-arch':''}" style="cursor:pointer;" onclick="togglePOExpand(${p.id})"><td>${open?'▲':'▼'}</td><td>${escapeHtml(d)}</td><td>${escapeHtml(p.supplier_name||'—')}</td><td>${escapeHtml(p.model||'')}</td><td>${p.quantity??''}</td><td>${poStatusBadge(p.status)}</td></tr>`;
+                if(open){
+                    const dd=p.delivery_date?new Date(p.delivery_date).toLocaleDateString('he-IL'):'—';
+                    h+=`<tr><td colspan="6" style="background:#f8f9fa; padding:10px 14px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px 24px;">
+                            <div><span style="color:#888;">תאריך אספקה: </span>${escapeHtml(dd)}</div>
+                            <div><span style="color:#888;">טווח סריאלים: </span>${escapeHtml(p.serial_range||'—')}</div>
+                            <div><span style="color:#888;">קובץ: </span>${p.has_file?`<a href="#" onclick="event.preventDefault();event.stopPropagation();openPOFile(${p.id})">📎 ${escapeHtml(p.file_name||'הצג')}</a>`:'—'}</div>
+                        </div>
+                        ${p.notes?`<div style="margin-top:6px;"><span style="color:#888;">הערות: </span>${escapeHtml(p.notes)}</div>`:''}
+                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditPO(${p.id})">ערוך</button> ${versionsBtn('purchase_orders',p.id)}${p.archived?restoreBtn('purchase_orders',p.id):''}
+                        <button class="btn" onclick="event.stopPropagation();printFrom2(${p.id})">🖨️ PDF</button>
+                        <button class="btn btn-delete" onclick="event.stopPropagation();deletePO(${p.id})">מחק</button></div></td></tr>`;
+                }
+            });
+            h+='</table></div>'; c.innerHTML=h;
+        }
+        function printFrom2(id){ const p=(poData||[]).find(x=>x.id===id); if(p) printRecord(p,'הזמנת רכש #'+id); }
+        function poEditForm(p){
+            const pd=p.po_date?String(p.po_date).slice(0,10):''; const dd=p.delivery_date?String(p.delivery_date).slice(0,10):'';
+            const opt=(x,cur)=>`<option value="${x}" ${cur===x?'selected':''}>${x}</option>`;
+            return `<div style="padding:16px; background:#fafbfc;">
+                <div class="form-row"><div class="form-group"><label>ספק</label><input type="text" id="epo_sup_${p.id}" list="poSupplierList" value="${escapeHtml(p.supplier_name||'')}"></div>
+                <div class="form-group"><label>תאריך הזמנה</label><input type="date" id="epo_date_${p.id}" value="${pd}"></div></div>
+                <div class="form-row"><div class="form-group"><label>דגם</label><input type="text" id="epo_model_${p.id}" value="${escapeHtml(p.model||'')}"></div>
+                <div class="form-group"><label>כמות</label><input type="number" id="epo_qty_${p.id}" value="${p.quantity??''}"></div></div>
+                <div class="form-row"><div class="form-group"><label>תאריך אספקה</label><input type="date" id="epo_deliv_${p.id}" value="${dd}"></div>
+                <div class="form-group"><label>טווח סריאלים</label><input type="text" id="epo_range_${p.id}" value="${escapeHtml(p.serial_range||'')}"></div></div>
+                <div class="form-row"><div class="form-group"><label>סטטוס</label><select id="epo_status_${p.id}">${['טיוטה','פתוחה','סגורה'].map(x=>opt(x,p.status)).join('')}</select></div>
+                <div class="form-group"><label>החלפת קובץ (אופ')</label><input type="file" id="epo_file_${p.id}" accept="application/pdf,image/*"></div></div>
+                <div class="form-group"><label>הערות</label><textarea id="epo_notes_${p.id}" rows="2">${escapeHtml(p.notes||'')}</textarea></div>
+                <div><button class="btn btn-success" onclick="savePOInline(${p.id})">שמור</button> <button class="btn" onclick="cancelEditPO()">בטל</button></div></div>`;
+        }
+        function togglePOExpand(id){ if(edPO===id) return; edPO=null; expPO=expPO===id?null:id; renderPOs(); }
+        function startEditPO(id){ expPO=id; edPO=id; renderPOs(); }
+        function cancelEditPO(){ edPO=null; renderPOs(); }
+        async function openPOFile(id){
+            const t=localStorage.getItem('adminToken');
+            try{ const res=await fetch(`${API_URL}/api/admin/purchase-orders/${id}/file`,{headers:{'Authorization':`Bearer ${t}`}});
+                if(!res.ok){ showMessage('הקובץ לא נמצא','error'); return; }
+                const blob=await res.blob(); const url=URL.createObjectURL(blob); window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url),60000);
+            }catch(e){ showMessage('שגיאה בטעינת הקובץ','error'); }
+        }
+        async function addPO(e){
+            e.preventDefault(); const t=localStorage.getItem('adminToken');
+            const body={ supplier_name: document.getElementById('poSupplierName').value.trim()||null, po_date: document.getElementById('poDate').value||null,
+                model: document.getElementById('poModel').value.trim(), quantity: document.getElementById('poQty').value||null,
+                delivery_date: document.getElementById('poDelivery').value||null, serial_range: document.getElementById('poSerialRange').value.trim(),
+                status: document.getElementById('poStatus').value, notes: document.getElementById('poNotes').value.trim() };
+            const f=document.getElementById('poFile').files[0];
+            if(f){ if(f.size>8*1024*1024){ showMessage('הקובץ גדול מדי (מקס 8MB)','error'); return; } body.file=await fileToBase64(f); body.filename=f.name; body.contentType=f.type||'application/pdf'; }
+            try{ const r=await fetch(`${API_URL}/api/admin/purchase-orders`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)});
+                if(!r.ok){ const d=await r.json().catch(()=>({})); showMessage(d.error||'שגיאה','error'); return; }
+                showMessage('נשמר','success'); e.target.reset(); document.getElementById('poAddForm').style.display='none'; loadPurchaseOrders();
+            }catch(err){ showMessage('שגיאה בשמירה','error'); }
+        }
+        async function savePOInline(id){
+            const t=localStorage.getItem('adminToken');
+            const body={ supplier_name: document.getElementById('epo_sup_'+id).value.trim()||null, po_date: document.getElementById('epo_date_'+id).value||null,
+                model: document.getElementById('epo_model_'+id).value.trim(), quantity: document.getElementById('epo_qty_'+id).value||null,
+                delivery_date: document.getElementById('epo_deliv_'+id).value||null, serial_range: document.getElementById('epo_range_'+id).value.trim(),
+                status: document.getElementById('epo_status_'+id).value, notes: document.getElementById('epo_notes_'+id).value.trim() };
+            const f=document.getElementById('epo_file_'+id).files[0];
+            if(f){ if(f.size>8*1024*1024){ showMessage('הקובץ גדול מדי (מקס 8MB)','error'); return; } body.file=await fileToBase64(f); body.filename=f.name; body.contentType=f.type||'application/pdf'; }
+            try{ const r=await fetch(`${API_URL}/api/admin/purchase-orders/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)});
+                if(!r.ok){ const d=await r.json().catch(()=>({})); showMessage(d.error||'שגיאה','error'); return; }
+                showMessage('עודכן','success'); edPO=null; loadPurchaseOrders();
+            }catch(err){ showMessage('שגיאה בשמירה','error'); }
+        }
+        async function deletePO(id){
+            if(!confirm('למחוק את ההזמנה?')) return; const t=localStorage.getItem('adminToken');
+            try{ const r=await fetch(`${API_URL}/api/admin/purchase-orders/${id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${t}`}});
+                if(!r.ok){ showMessage('שגיאה במחיקה','error'); return; } showMessage('נמחק','success'); expPO=null; loadPurchaseOrders();
+            }catch(err){ showMessage('שגיאה','error'); }
+        }
         function toggleReceivingExpand(id){ expandedReceivingId=expandedReceivingId===id?null:id; if(editingReceivingId&&editingReceivingId!==expandedReceivingId) editingReceivingId=null; renderReceiving(); }
         function startEditReceiving(id){ editingReceivingId=id; expandedReceivingId=id; renderReceiving(); }
         function cancelEditReceiving(){ editingReceivingId=null; renderReceiving(); }
@@ -1840,7 +1976,7 @@
         }
 
         // ===== ניהול משתמשי ניהול =====
-        const AREA_LABELS = { warranties:'אחריות', orders:'הזמנות', products:'מוצרים', stock:'מלאי', users:'משתמשים', receiving:'קליטה', communications:'תקשורת לקוחות', settings:'הגדרות', waitlist:'רשימת תפוצה', backups:'גיבויים' };
+        const AREA_LABELS = { warranties:'אחריות', orders:'הזמנות', products:'מוצרים', stock:'מלאי', users:'משתמשים', receiving:'קליטה', communications:'תקשורת לקוחות', settings:'הגדרות', waitlist:'רשימת תפוצה', backups:'גיבויים', purchasing:'הזמנות רכש' };
         let qmsAreasList = [];
         let adminUsersData = [];
         let expandedAdminId = null, editingAdminId = null;
