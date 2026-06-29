@@ -64,6 +64,14 @@
         .kpi-card .kpi-big { font-size: 2rem; font-weight: 800; color: #2c3e50; line-height: 1.1; }
         .kpi-card .kpi-sub { color: #2440B0; font-weight: 600; margin-top: 4px; font-size: .95rem; }
         .kpi-card .kpi-lbl { color: #5A6C7D; font-size: .85rem; margin-top: 6px; }
+        .arch-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; }
+        .arch-toggle input { display: none; }
+        .arch-toggle .sw { width: 42px; height: 22px; background: #cfd8dc; border-radius: 22px; position: relative; transition: .2s; }
+        .arch-toggle .sw::after { content: ''; position: absolute; width: 18px; height: 18px; background: #fff; border-radius: 50%; top: 2px; right: 2px; transition: .2s; }
+        .arch-toggle input:checked + .sw { background: #27ae60; }
+        .arch-toggle input:checked + .sw::after { right: 22px; }
+        tr.qms-arch > td { background: #eceff1 !important; color: #607d8b; }
+        tr.qms-arch .arch-tag { background: #b0bec5; color: #fff; border-radius: 4px; padding: 1px 6px; font-size: .75rem; margin-right: 4px; }
 
         /* Tabs */
         .tabs {
@@ -340,7 +348,7 @@
                 <h1>🎛️ פאנל ניהול - ECODOS</h1>
                 <p style="color: #5A6C7D; margin-top: 5px;">שלום, <span id="adminName">אדמין</span></p>
             </div>
-            <button class="btn" onclick="showArchivePicker()" style="margin-left:8px;">📦 ארכיון</button><button class="logout" onclick="logout()">יציאה</button>
+            <div style="display:flex;align-items:center;gap:14px;"><label class="arch-toggle"><input type="checkbox" id="archToggle" onchange="toggleArchive(this.checked)"><span class="sw"></span>📦 הצג ארכיון</label><button class="logout" onclick="logout()">יציאה</button></div>
         </header>
 
         <div id="message" class="message" style="display:none;"></div>
@@ -1121,6 +1129,7 @@
         }
 
         function switchTab(tab) {
+            window.currentTab = tab;
             if (!adminHasArea(tab)) return;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1209,6 +1218,10 @@
         function kpiCardHtml(big, sub, lbl){ return `<div class="kpi-card"><div class="kpi-big">${big}</div><div class="kpi-sub">${sub}</div><div class="kpi-lbl">${escapeHtml(lbl)}</div></div>`; }
         function kpiRow(cards){ return `<div class="kpi-row">${cards.join('')}</div>`; }
         function versionsBtn(table, id){ return `<button class="btn" onclick="event.stopPropagation();showVersions('${table}',${id})">🕘 גרסאות</button>`; }
+        function restoreBtn(table, id){ return ` <button class="btn btn-success" onclick="event.stopPropagation();restoreRecord('${table}',${id})">↩ שחזר</button>`; }
+        let SHOW_ARCHIVED=false;
+        (function(){ const _f=window.fetch; window.fetch=function(u,o){ try{ if(SHOW_ARCHIVED && typeof u==='string' && /\/api\/admin\/communications(\?|$)/.test(u)){ u += (u.includes('?')?'&':'?')+'showArchived=1'; } }catch(e){} return _f.call(this,u,o); }; })();
+        function toggleArchive(on){ SHOW_ARCHIVED=on; if(window.currentTab) switchTab(window.currentTab); }
         const FIELD_HE={id:'מזהה',comm_date:'תאריך',type:'סוג',customer_name:'שם לקוח',customer_phone:'טלפון',serial_number:'מספר סריאלי',user_id:'משתמש',order_id:'הזמנה',description:'תיאור',classification:'סיווג',initial_response:'מענה ראשוני',resolution:'פתרון',status:'סטטוס',score:'ציון',feedback_topic:'נושא משוב',feedback_scores:'דירוגי משוב',survey_stage:'שלב סקר',receiving_date:'תאריך',supplier_name:'ספק',shipment_ref:'אסמכתת משלוח',model:'דגם',quantity_declared:'כמות מוצהרת',quantity_received:'כמות שהתקבלה',damage_notes:'נזק/ממצאים',sample_size:'גודל מדגם',sample_findings:'ממצאי מדגם',notes:'הערות',receiving_type:'סוג קליטה',product_id:'מוצר',receiving_id:'קליטה',is_legacy:'ישן',archived:'בארכיון'};
         const ARCHIVE_MODULES=[['communications','תקשורת/תלונות']];
         function showArchivePicker(){
@@ -1232,7 +1245,7 @@
         async function restoreRecord(table,id,btn){
             if(!confirm('לשחזר רשומה זו מהארכיון?'))return;
             const t=localStorage.getItem('adminToken');
-            try{const r=await fetch(`${API_URL}/api/admin/restore/${table}/${id}`,{method:'POST',headers:{'Authorization':`Bearer ${t}`}}); if(r.ok){btn.closest('div').remove(); if(typeof showMessage==='function')showMessage('שוחזר','success');}else{alert('שגיאה בשחזור');}}catch(e){alert('שגיאה בשחזור');}
+            try{const r=await fetch(`${API_URL}/api/admin/restore/${table}/${id}`,{method:'POST',headers:{'Authorization':`Bearer ${t}`}}); if(r.ok){if(typeof showMessage==='function')showMessage('שוחזר','success'); if(window.currentTab)switchTab(window.currentTab);}else{alert('שגיאה בשחזור');}}catch(e){alert('שגיאה בשחזור');}
         }
         async function showVersions(table, id){
             const t=localStorage.getItem('adminToken'); let rows=[];
@@ -1260,7 +1273,7 @@
             commData.forEach(c => {
                 if (editingCommId === c.id) { h += `<tr><td colspan="5" style="padding:0;">${commEditForm(c)}</td></tr>`; return; }
                 const open = expandedCommId === c.id;
-                h += `<tr style="cursor:pointer;" onclick="toggleCommExpand(${c.id})">
+                h += `<tr class="${c.archived?'qms-arch':''}" style="cursor:pointer;" onclick="toggleCommExpand(${c.id})">
                     <td>${open?'▲':'▼'}</td>
                     <td>${c.comm_date ? new Date(c.comm_date).toLocaleDateString('he-IL') : '-'}</td>
                     <td>${escapeHtml(c.type||'')}</td>
@@ -1277,7 +1290,7 @@
                         ${c.description ? `<div style="margin-top:6px;"><span style="color:#888;">תיאור: </span>${escapeHtml(c.description)}</div>` : ''}
                         ${c.initial_response ? `<div style="margin-top:4px;"><span style="color:#888;">מענה ראשוני: </span>${escapeHtml(c.initial_response)}</div>` : ''}
                         ${c.resolution ? `<div style="margin-top:4px;"><span style="color:#888;">פתרון: </span>${escapeHtml(c.resolution)}</div>` : ''}
-                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditComm(${c.id})">ערוך</button> ${versionsBtn('communications',c.id)}
+                        <div style="margin-top:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();startEditComm(${c.id})">ערוך</button> ${versionsBtn('communications',c.id)}${c.archived?restoreBtn('communications',c.id):''}
                         <button class="btn btn-delete" onclick="event.stopPropagation();deleteComm(${c.id})">מחק</button></div></td></tr>`;
                 }
             });
