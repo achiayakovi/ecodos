@@ -447,9 +447,15 @@
                     <div class="form-group"><label>טלפון אורח</label><input type="text" id="mo_gphone"></div>
                 </div>
                 <div class="form-group"><label>אימייל אורח</label><input type="text" id="mo_gemail"></div>
-                <div style="margin:8px 0;"><strong>פריטים:</strong></div>
-                <div id="mo_items"></div>
-                <button type="button" class="btn" onclick="addManualItem()" style="margin-bottom:10px;">+ הוסף פריט</button>
+                <div style="margin-top:12px;border-top:1px solid #CFD7F0;padding-top:12px;margin-bottom:10px;">
+                    <strong>הוספת מוצרים:</strong>
+                    <div style="display:flex;gap:10px;align-items:flex-end;margin-top:6px;">
+                        <select id="mo_product" style="flex:1;"></select>
+                        <input type="number" id="mo_qty" value="1" min="1" style="width:80px;">
+                        <button type="button" class="btn" onclick="addManualItem()">הוסף פריט</button>
+                    </div>
+                    <div id="mo_items" style="margin-top:10px;"></div>
+                </div>
                 <div><button type="submit" class="btn btn-primary">צור הזמנה</button> <button type="button" class="btn" onclick="toggleManualOrder()">ביטול</button></div>
             </form>
             <div id="ordersLoading" class="loading">טוען...</div>
@@ -2827,22 +2833,38 @@
                 }catch(err){ box.innerHTML=''; }
             },300);
         }
-        let moProducts=[];
+        let moProducts=[]; let manualItems=[];
         function toggleManualOrder(){ const f=document.getElementById('manualOrderForm'); if(f.style.display==='none'){ f.style.display='block'; initManualOrder(); } else f.style.display='none'; }
         async function initManualOrder(){
             const t=localStorage.getItem('adminToken');
             document.getElementById('mo_user').innerHTML='<option value="">— אורח —</option>'+(allUsers||[]).map(u=>`<option value="${u.id}">${escapeHtml(u.full_name)} (${escapeHtml(u.email)})</option>`).join('');
             try{ moProducts=await fetch(`${API_URL}/api/admin/all-products`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json()); }catch(e){ moProducts=[]; }
-            document.getElementById('mo_items').innerHTML=''; addManualItem();
+            document.getElementById('mo_product').innerHTML=(moProducts||[]).map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (₪${p.sale_price||p.price})</option>`).join('');
+            document.getElementById('mo_qty').value=1;
+            manualItems=[]; renderManualItems();
         }
         function addManualItem(){
-            const div=document.createElement('div'); div.className='form-row'; div.style.marginBottom='6px';
-            div.innerHTML=`<div class="form-group"><select class="mo-prod">${(moProducts||[]).map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (₪${p.sale_price||p.price})</option>`).join('')}</select></div><div class="form-group" style="max-width:120px;"><input type="number" class="mo-qty" value="1" min="1"></div>`;
-            document.getElementById('mo_items').appendChild(div);
+            const pid=parseInt(document.getElementById('mo_product').value,10);
+            const qty=parseInt(document.getElementById('mo_qty').value,10)||1;
+            const p=(moProducts||[]).find(x=>x.id===pid); if(!p) return;
+            const exist=manualItems.find(it=>it.product_id===pid);
+            if(exist){ exist.quantity+=qty; } else { manualItems.push({product_id:pid,quantity:qty,name:p.name,price:p.sale_price||p.price}); }
+            document.getElementById('mo_qty').value=1; renderManualItems();
+        }
+        function removeManualItem(idx){ manualItems.splice(idx,1); renderManualItems(); }
+        function updateManualQty(idx,val){ const q=parseInt(val,10); manualItems[idx].quantity=(q>0?q:1); renderManualItems(); }
+        function renderManualItems(){
+            document.getElementById('mo_items').innerHTML = manualItems.length===0 ? '<span style="color:#888;">לא נוספו פריטים</span>' :
+                manualItems.map((it,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+                    <span style="flex:1;">${escapeHtml(it.name)}</span>
+                    <input type="number" min="1" value="${it.quantity}" onchange="updateManualQty(${i}, this.value)" style="width:64px;">
+                    <span style="min-width:64px;text-align:left;">₪${it.price*it.quantity}</span>
+                    <button type="button" class="btn" title="הסר מוצר" onclick="removeManualItem(${i})" style="padding:2px 10px;color:#c0392b;font-weight:bold;">✕</button>
+                </div>`).join('');
         }
         async function createManualOrder(e){
             e.preventDefault(); const t=localStorage.getItem('adminToken');
-            const items=Array.from(document.querySelectorAll('#mo_items .form-row')).map(r=>({product_id:parseInt(r.querySelector('.mo-prod').value),quantity:parseInt(r.querySelector('.mo-qty').value)||1})).filter(i=>i.product_id);
+            const items=manualItems.map(it=>({product_id:it.product_id,quantity:it.quantity})).filter(i=>i.product_id);
             if(!items.length){ showMessage('הוסף לפחות פריט אחד','error'); return; }
             const body={ user_id:document.getElementById('mo_user').value||null, guest_name:document.getElementById('mo_gname').value.trim(), guest_phone:document.getElementById('mo_gphone').value.trim(), guest_email:document.getElementById('mo_gemail').value.trim(), shipping_address:document.getElementById('mo_address').value.trim(), items };
             try{ const r=await fetch(`${API_URL}/api/admin/orders/manual`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)}); const d=await r.json(); if(!r.ok)throw new Error(d.error); showMessage(`הזמנה #${d.id} נוצרה`,'success'); document.getElementById('manualOrderForm').style.display='none'; loadOrders(); }catch(err){ showMessage(err.message||'שגיאה','error'); }
