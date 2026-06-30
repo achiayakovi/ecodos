@@ -437,27 +437,40 @@
                 </select>
                 <button class="btn btn-primary" onclick="toggleManualOrder()">➕ הזמנה ידנית</button>
             </div>
-            <form id="manualOrderForm" onsubmit="createManualOrder(event)" style="display:none;background:#fafbfc;padding:16px;border-radius:8px;margin-bottom:18px;border:1px solid #CFD7F0;">
-                <div class="form-row">
-                    <div class="form-group"><label>לקוח רשום (אופציונלי)</label><select id="mo_user"><option value="">— אורח —</option></select></div>
-                    <div class="form-group"><label>כתובת למשלוח</label><input type="text" id="mo_address"></div>
+            <div id="manualOrderForm" style="display:none; background:#fafbfc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #CFD7F0;">
+                <h3>הזמנה טלפונית</h3>
+                <div style="position:relative; margin-bottom:8px;">
+                    <label>חיפוש לקוח קיים (שם/טלפון/סריאלי):</label><br>
+                    <input type="text" id="moCustSearch" placeholder="הקלד לחיפוש..." oninput="searchOrderCustomer()" autocomplete="off" style="padding:8px; width:260px;">
+                    <div id="moCustResults" style="display:none; position:absolute; z-index:10; background:#fff; border:1px solid #ccc; border-radius:6px; width:300px; max-height:200px; overflow:auto;"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label>שם אורח</label><input type="text" id="mo_gname"></div>
-                    <div class="form-group"><label>טלפון אורח</label><input type="text" id="mo_gphone"></div>
+                <input type="hidden" id="moUserId">
+                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                    <div><label>שם *<br><input type="text" id="moName" style="padding:8px;"></label></div>
+                    <div><label>טלפון *<br><input type="text" id="moPhone" style="padding:8px;"></label></div>
+                    <div><label>אימייל<br><input type="email" id="moEmail" style="padding:8px;"></label></div>
                 </div>
-                <div class="form-group"><label>אימייל אורח</label><input type="text" id="mo_gemail"></div>
-                <div style="margin-top:12px;border-top:1px solid #CFD7F0;padding-top:12px;margin-bottom:10px;">
-                    <strong>הוספת מוצרים:</strong>
-                    <div style="display:flex;gap:10px;align-items:flex-end;margin-top:6px;">
-                        <select id="mo_product" style="flex:1;"></select>
-                        <input type="number" id="mo_qty" value="1" min="1" style="width:80px;">
+                <div style="margin-top:10px; display:flex; gap:18px; align-items:center;">
+                    <label style="font-weight:normal;"><input type="radio" name="moDelivery" value="משלוח" checked onchange="onMoDeliveryChange()"> משלוח</label>
+                    <label style="font-weight:normal;"><input type="radio" name="moDelivery" value="איסוף" onchange="onMoDeliveryChange()"> איסוף עצמי</label>
+                </div>
+                <div id="moAddressGroup" style="margin-top:10px;"><label>כתובת משלוח<br><textarea id="moAddress" rows="2" style="padding:8px; width:100%; box-sizing:border-box;"></textarea></label></div>
+
+                <div style="margin-top:12px; border-top:1px solid #CFD7F0; padding-top:12px;">
+                    <label>הוספת מוצרים:</label><br>
+                    <div style="display:flex; gap:10px; align-items:flex-end; margin-top:6px;">
+                        <select id="moProduct" style="flex:1;"></select>
+                        <input type="number" id="moQty" value="1" min="1" style="padding:8px; width:80px;">
                         <button type="button" class="btn" onclick="addManualItem()">הוסף פריט</button>
                     </div>
-                    <div id="mo_items" style="margin-top:10px;"></div>
+                    <div id="moItemsList" style="margin-top:10px;"></div>
                 </div>
-                <div><button type="submit" class="btn btn-primary">צור הזמנה</button> <button type="button" class="btn" onclick="toggleManualOrder()">ביטול</button></div>
-            </form>
+                <div style="margin-top:10px;"><label>הערות<br><textarea id="moNotes" rows="2" style="padding:8px; width:100%; box-sizing:border-box;"></textarea></label></div>
+                <div style="margin-top:14px;">
+                    <button class="btn btn-success" onclick="submitManualOrder()">צור הזמנה</button>
+                    <button class="btn" onclick="toggleManualOrder()">ביטול</button>
+                </div>
+            </div>
             <div id="ordersLoading" class="loading">טוען...</div>
             <div id="ordersContent"></div>
         </div>
@@ -2833,41 +2846,109 @@
                 }catch(err){ box.innerHTML=''; }
             },300);
         }
-        let moProducts=[]; let manualItems=[];
-        function toggleManualOrder(){ const f=document.getElementById('manualOrderForm'); if(f.style.display==='none'){ f.style.display='block'; initManualOrder(); } else f.style.display='none'; }
-        async function initManualOrder(){
-            const t=localStorage.getItem('adminToken');
-            document.getElementById('mo_user').innerHTML='<option value="">— אורח —</option>'+(allUsers||[]).map(u=>`<option value="${u.id}">${escapeHtml(u.full_name)} (${escapeHtml(u.email)})</option>`).join('');
-            try{ moProducts=await fetch(`${API_URL}/api/admin/all-products`,{headers:{'Authorization':`Bearer ${t}`}}).then(r=>r.json()); }catch(e){ moProducts=[]; }
-            document.getElementById('mo_product').innerHTML=(moProducts||[]).map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (₪${p.sale_price||p.price})</option>`).join('');
-            document.getElementById('mo_qty').value=1;
-            manualItems=[]; renderManualItems();
+        // ===== הזמנה טלפונית =====
+        let manualItems = [];
+        let manualProductsList = [];
+
+        function toggleManualOrder() {
+            const f = document.getElementById('manualOrderForm');
+            const show = f.style.display === 'none';
+            f.style.display = show ? 'block' : 'none';
+            if (show && manualProductsList.length === 0) loadManualProducts();
         }
-        function addManualItem(){
-            const pid=parseInt(document.getElementById('mo_product').value,10);
-            const qty=parseInt(document.getElementById('mo_qty').value,10)||1;
-            const p=(moProducts||[]).find(x=>x.id===pid); if(!p) return;
-            const exist=manualItems.find(it=>it.product_id===pid);
-            if(exist){ exist.quantity+=qty; } else { manualItems.push({product_id:pid,quantity:qty,name:p.name,price:p.sale_price||p.price}); }
-            document.getElementById('mo_qty').value=1; renderManualItems();
+
+        async function loadManualProducts() {
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/all-products`, { headers: { 'Authorization': `Bearer ${token}` } });
+                manualProductsList = await res.json();
+                document.getElementById('moProduct').innerHTML = manualProductsList.map(p =>
+                    `<option value="${p.id}">${escapeHtml(p.name)} — ₪${p.sale_price || p.price} (מלאי ${p.stock_quantity})</option>`).join('');
+            } catch (err) { showMessage('שגיאה בטעינת מוצרים', 'error'); }
         }
-        function removeManualItem(idx){ manualItems.splice(idx,1); renderManualItems(); }
-        function updateManualQty(idx,val){ const q=parseInt(val,10); manualItems[idx].quantity=(q>0?q:1); renderManualItems(); }
-        function renderManualItems(){
-            document.getElementById('mo_items').innerHTML = manualItems.length===0 ? '<span style="color:#888;">לא נוספו פריטים</span>' :
-                manualItems.map((it,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+
+        function onMoDeliveryChange() {
+            const m = (document.querySelector('input[name="moDelivery"]:checked') || {}).value;
+            document.getElementById('moAddressGroup').style.display = (m === 'איסוף') ? 'none' : 'block';
+        }
+
+        let moCustTimer = null;
+        function searchOrderCustomer() {
+            clearTimeout(moCustTimer);
+            moCustTimer = setTimeout(async () => {
+                const token = localStorage.getItem('adminToken');
+                const q = document.getElementById('moCustSearch').value.trim();
+                const box = document.getElementById('moCustResults');
+                if (q.length < 2) { box.style.display = 'none'; return; }
+                try {
+                    const rows = await fetch(`${API_URL}/api/admin/customer-search?q=${encodeURIComponent(q)}`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json());
+                    if (!Array.isArray(rows) || rows.length === 0) { box.innerHTML = '<div style="padding:8px;color:#888;">אין תוצאות</div>'; box.style.display = 'block'; return; }
+                    box.innerHTML = rows.map(r => `<div style="padding:8px;cursor:pointer;border-bottom:1px solid #eee;"
+                        onclick="pickOrderCustomer('${escapeJsAttr(r.name||'')}','${escapeJsAttr(r.phone||'')}','${r.user_id||''}','${escapeJsAttr(r.email||'')}')">
+                        ${escapeHtml(r.name||'—')} · ${escapeHtml(r.phone||'')} <small style="color:#999;">(${escapeHtml(r.source)})</small></div>`).join('');
+                    box.style.display = 'block';
+                } catch (err) { box.style.display = 'none'; }
+            }, 300);
+        }
+        function pickOrderCustomer(name, phone, userId, email) {
+            document.getElementById('moName').value = name || '';
+            document.getElementById('moPhone').value = phone || '';
+            document.getElementById('moUserId').value = userId || '';
+            if (email) document.getElementById('moEmail').value = email;
+            document.getElementById('moCustResults').style.display = 'none';
+            document.getElementById('moCustSearch').value = '';
+        }
+
+        function addManualItem() {
+            const pid = parseInt(document.getElementById('moProduct').value, 10);
+            const qty = parseInt(document.getElementById('moQty').value, 10) || 1;
+            const p = manualProductsList.find(x => x.id === pid);
+            if (!p) return;
+            const exist = manualItems.find(it => it.product_id === pid);
+            if (exist) { exist.quantity += qty; } else { manualItems.push({ product_id: pid, quantity: qty, name: p.name, price: p.sale_price || p.price }); }
+            document.getElementById('moQty').value = 1;
+            renderManualItems();
+        }
+        function removeManualItem(idx) { manualItems.splice(idx, 1); renderManualItems(); }
+        function updateManualQty(idx, val) { const q = parseInt(val, 10); manualItems[idx].quantity = (q > 0 ? q : 1); renderManualItems(); }
+        function renderManualItems() {
+            document.getElementById('moItemsList').innerHTML = manualItems.length === 0 ? '<span style="color:#888;">לא נוספו פריטים</span>' :
+                manualItems.map((it, i) => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
                     <span style="flex:1;">${escapeHtml(it.name)}</span>
                     <input type="number" min="1" value="${it.quantity}" onchange="updateManualQty(${i}, this.value)" style="width:64px;">
-                    <span style="min-width:64px;text-align:left;">₪${it.price*it.quantity}</span>
-                    <button type="button" class="btn" title="הסר מוצר" onclick="removeManualItem(${i})" style="padding:2px 10px;color:#c0392b;font-weight:bold;">✕</button>
-                </div>`).join('');
+                    <span style="min-width:64px;text-align:left;">₪${it.price * it.quantity}</span>
+                    <button type="button" class="btn btn-danger" title="הסר מוצר" onclick="removeManualItem(${i})" style="padding:2px 10px;">✕</button></div>`).join('');
         }
-        async function createManualOrder(e){
-            e.preventDefault(); const t=localStorage.getItem('adminToken');
-            const items=manualItems.map(it=>({product_id:it.product_id,quantity:it.quantity})).filter(i=>i.product_id);
-            if(!items.length){ showMessage('הוסף לפחות פריט אחד','error'); return; }
-            const body={ user_id:document.getElementById('mo_user').value||null, guest_name:document.getElementById('mo_gname').value.trim(), guest_phone:document.getElementById('mo_gphone').value.trim(), guest_email:document.getElementById('mo_gemail').value.trim(), shipping_address:document.getElementById('mo_address').value.trim(), items };
-            try{ const r=await fetch(`${API_URL}/api/admin/orders/manual`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify(body)}); const d=await r.json(); if(!r.ok)throw new Error(d.error); showMessage(`הזמנה #${d.id} נוצרה`,'success'); document.getElementById('manualOrderForm').style.display='none'; loadOrders(); }catch(err){ showMessage(err.message||'שגיאה','error'); }
+
+        async function submitManualOrder() {
+            const token = localStorage.getItem('adminToken');
+            if (manualItems.length === 0) { showMessage('הוסף לפחות מוצר אחד', 'error'); return; }
+            const name = document.getElementById('moName').value.trim();
+            const phone = document.getElementById('moPhone').value.trim();
+            const userId = document.getElementById('moUserId').value;
+            if (!userId && (!name || !phone)) { showMessage('נדרש שם וטלפון', 'error'); return; }
+            const body = {
+                user_id: userId || null,
+                guest_name: name, guest_phone: phone,
+                guest_email: document.getElementById('moEmail').value.trim(),
+                delivery_method: (document.querySelector('input[name="moDelivery"]:checked') || {}).value || 'משלוח',
+                shipping_address: document.getElementById('moAddress').value.trim(),
+                notes: document.getElementById('moNotes').value.trim(),
+                items: manualItems.map(it => ({ product_id: it.product_id, quantity: it.quantity }))
+            };
+            try {
+                const res = await fetch(`${API_URL}/api/admin/orders/manual`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const d = await res.json();
+                if (!res.ok) { showMessage(d.error || 'שגיאה', 'error'); return; }
+                showMessage('הזמנה נוצרה #' + d.id, 'success');
+                manualItems = []; renderManualItems();
+                ['moName','moPhone','moEmail','moAddress','moNotes','moUserId'].forEach(id => document.getElementById(id).value = '');
+                toggleManualOrder();
+                loadOrders();
+            } catch (err) { showMessage('שגיאה ביצירת הזמנה', 'error'); }
         }
         async function searchOrders(){
             const q=document.getElementById('orderSearch').value.trim();
