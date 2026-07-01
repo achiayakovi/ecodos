@@ -336,6 +336,16 @@
             .filters input { min-width: 100%; }
         }
         option { background: #CFD7F0; color: #1A2332; }
+        /* ===== Notify toggle switches ===== */
+        .notify-row { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #EEF2FB; }
+        .notify-row:last-child { border-bottom: none; }
+        .notify-row .notify-label { color: #1A2332; font-size: 0.95rem; }
+        .notify-switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+        .notify-switch input { opacity: 0; width: 0; height: 0; }
+        .notify-slider { position: absolute; cursor: pointer; inset: 0; background: #C7CFDE; border-radius: 26px; transition: background .2s; }
+        .notify-slider::before { content: ""; position: absolute; height: 20px; width: 20px; right: 3px; top: 3px; background: #FFFFFF; border-radius: 50%; transition: transform .2s; }
+        .notify-switch input:checked + .notify-slider { background: #2440B0; }
+        .notify-switch input:checked + .notify-slider::before { transform: translateX(-20px); }
     </style>
 </head>
 <body>
@@ -542,6 +552,12 @@
         <!-- Settings Section -->
         <div id="settingsSection" class="section">
             <h2>הגדרות מערכת</h2>
+
+            <div style="background: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #CFD7F0; margin-bottom: 20px; max-width: 600px;">
+                <h2 style="margin-bottom: 6px; color: #1A2332;">🔔 התראות טלגרם</h2>
+                <p style="color: #5A6C7D; margin-bottom: 20px; font-size: 0.95rem;">בחר על אילו אירועים לקבל התראה בטלגרם</p>
+                <div id="notifyToggles"></div>
+            </div>
 
             <div style="background: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #CFD7F0; margin-bottom: 20px; max-width: 600px;">
                 <h3 style="margin-bottom: 20px; color: #1A2332;">סוגי מוצר — תפריט רישום אחריות</h3>
@@ -1222,6 +1238,7 @@
                 if (typeof renderProductTypesList === 'function') renderProductTypesList();
                 if (typeof renderBadgesList === 'function') renderBadgesList();
                 if (typeof loadPickupLocationsAdmin === 'function') loadPickupLocationsAdmin();
+                if (typeof loadNotifySettings === 'function') loadNotifySettings();
             }
         }
 
@@ -3462,6 +3479,59 @@
             msg.className = `message ${type}`;
             msg.style.display = 'block';
             setTimeout(() => msg.style.display = 'none', 3000);
+        }
+
+        // ===== Telegram notification settings =====
+        async function loadNotifySettings() {
+            const container = document.getElementById('notifyToggles');
+            if (!container) return;
+            container.innerHTML = '<p style="color: #5A6C7D;">טוען...</p>';
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/notification-settings`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('שגיאה');
+                const list = await res.json();
+                if (!Array.isArray(list) || !list.length) { container.innerHTML = '<p style="color: #5A6C7D;">אין התראות מוגדרות.</p>'; return; }
+                container.innerHTML = '';
+                list.forEach(it => {
+                    const row = document.createElement('div');
+                    row.className = 'notify-row';
+                    const label = document.createElement('span');
+                    label.className = 'notify-label';
+                    label.textContent = it.label;
+                    const sw = document.createElement('label');
+                    sw.className = 'notify-switch';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = !!it.enabled;
+                    cb.addEventListener('change', () => toggleNotify(it.key, cb.checked));
+                    const slider = document.createElement('span');
+                    slider.className = 'notify-slider';
+                    sw.appendChild(cb);
+                    sw.appendChild(slider);
+                    row.appendChild(label);
+                    row.appendChild(sw);
+                    container.appendChild(row);
+                });
+            } catch (e) {
+                container.innerHTML = '<p style="color:#e74c3c;">שגיאה בטעינת ההתראות.</p>';
+            }
+        }
+
+        async function toggleNotify(key, enabled) {
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/api/admin/notification-settings`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ key, enabled })
+                });
+                if (!res.ok) { const d = await res.json().catch(() => ({})); showMessage(d.error || 'שגיאה', 'error'); loadNotifySettings(); return; }
+                showMessage('נשמר', 'success');
+            } catch (e) {
+                showMessage('שגיאה', 'error');
+                loadNotifySettings();
+            }
         }
 
         // Init
