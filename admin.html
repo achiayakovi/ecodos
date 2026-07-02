@@ -2753,8 +2753,11 @@
             else if(callAt) icon=`📞 שיחה · ${dstr}`;
             else if(state==='pending') icon=hasEmail?`📧 מייל · ${dstr}`:`📞 שיחה · ${dstr}`;
             else icon='⚪ לא נשלח';
-            const btn=state!=='done'
-                ? ` <button onclick="event.stopPropagation();orderSurveyCall(${o.id},'${stage}')" style="font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid #1E6FD9;background:#fff;color:#1E6FD9;cursor:pointer;">חייג</button>`
+            const btnStyle='font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid #1E6FD9;background:#fff;color:#1E6FD9;cursor:pointer;';
+            const btn = state!=='done'
+                ? (hasEmail
+                    ? ` <button onclick="event.stopPropagation();orderSurveyEmail(${o.id},'${stage}')" style="${btnStyle}">שלח אימייל</button>`
+                    : ` <button onclick="event.stopPropagation();orderSurveyCall(${o.id},'${stage}')" style="${btnStyle}">חייג</button>`)
                 : '';
             return `<div style="font-size:12px;white-space:nowrap;margin:2px 0;"><b>${label}:</b> ${icon}${btn}</div>`;
         }
@@ -2980,6 +2983,11 @@
         async function assignOrderGuest(orderId, name, phone){
             const t=localStorage.getItem('adminToken');
             try{const r=await fetch(`${API_URL}/api/admin/orders/${orderId}/assign-guest`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({name,phone})});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('שויך כאורח','success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
+        }
+        async function orderSurveyEmail(id,stage){
+            const label=stage==='day30'?'30 יום':'רכישה';
+            if(!confirm(`לשלוח סקר ${label} במייל להזמנה #${id}?`))return; const t=localStorage.getItem('adminToken');
+            try{const r=await fetch(`${API_URL}/api/admin/orders/${id}/survey-email/${stage}`,{method:'POST',headers:{'Authorization':`Bearer ${t}`}});const d=await r.json();if(!r.ok)throw new Error(d.error);showMessage('הסקר נשלח במייל','success');loadOrders();}catch(e){showMessage(e.message||'שגיאה','error');}
         }
         async function orderSurveyCall(id,stage){
             const label=stage==='day30'?'30 יום':'רכישה';
