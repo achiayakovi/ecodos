@@ -1420,12 +1420,16 @@
         }
 
         .order-card, .warranty-card {
-            background: #E8EFFF;
+            background: #f8f9fa;
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
             border-right: 5px solid #2440B0;
         }
+        .acc-body { display: none; }
+        .order-card.open .acc-body, .warranty-card.open .acc-body { display: block; }
+        .acc-chevron { display: inline-block; transition: transform .2s; font-size: .8em; color: #8a93b5; }
+        .order-card.open .acc-chevron, .warranty-card.open .acc-chevron { transform: rotate(180deg); }
 
         .order-header {
             display: flex;
@@ -1646,6 +1650,15 @@
         /* Login/Register card width (match ponpela) */
         .auth-container {
             max-width: 500px;
+            margin: 60px auto;
+            background: #FFFFFF;
+            border: 1px solid #CFD7F0;
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        .dashboard-container {
+            max-width: 1000px;
             margin: 60px auto;
             background: #FFFFFF;
             border: 1px solid #CFD7F0;
@@ -2365,17 +2378,19 @@
                 }
 
                 container.innerHTML = orders.map(order => `
-                    <div class="order-card">
+                    <div class="order-card" onclick="this.classList.toggle('open')" style="cursor:pointer;">
                         <div class="order-header">
-                            <span class="order-id">הזמנה #${order.id}</span>
+                            <span class="order-id">הזמנה #${order.id} <span class="acc-chevron">▾</span></span>
                             <span class="order-status status-${order.status}">${({pending:'ממתין', preparing:'הכנת הזמנה', dispatched:(order.delivery_method==='איסוף'?'מוכן לאיסוף':'נשלח'), completed:'הושלם', cancelled:'בוטל'}[order.status] || order.status)}</span>
                         </div>
-                        <div><strong>תאריך:</strong> ${new Date(order.created_at).toLocaleDateString('he-IL')}</div>
-                        <div><strong>סה"כ:</strong> ₪${order.total_amount}</div>
-                        <div class="order-items">
-                            ${order.items.map(item => `
-                                <div class="order-item">${item.product_name} x${item.quantity}</div>
-                            `).join('')}
+                        <div class="acc-body">
+                            <div><strong>תאריך:</strong> ${new Date(order.created_at).toLocaleDateString('he-IL')}</div>
+                            <div><strong>סה"כ:</strong> ₪${order.total_amount}</div>
+                            <div class="order-items">
+                                ${order.items.map(item => `
+                                    <div class="order-item">${item.product_name} x${item.quantity}</div>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
                 `).join('');
@@ -2401,9 +2416,9 @@
                 }
 
                 container.innerHTML = warranties.map(w => `
-                    <div class="warranty-card">
-                        <h3>מספר מכשיר: ${w.serial_number}</h3>
-                        <div class="warranty-info">
+                    <div class="warranty-card" onclick="this.classList.toggle('open')" style="cursor:pointer;">
+                        <h3>מספר מכשיר: ${w.serial_number} <span class="acc-chevron">▾</span></h3>
+                        <div class="warranty-info acc-body">
                             <div class="warranty-field">
                                 <strong>תאריך רכישה:</strong>
                                 ${new Date(w.purchase_date).toLocaleDateString('he-IL')}
